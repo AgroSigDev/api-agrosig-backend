@@ -28,34 +28,6 @@ API AGROSIG BACKEND es una aplicacion contruida con node.js y express que propoc
 - **CORS**: cors
 - **Herramientas de Desarrollo**: nodemon, standard
 
-## 📁 Estructura del Proyecto
-
-```
-api-survey-system/
-├── config.js                          # Configuración de la aplicación
-├── index.js                          # Punto de entrada de la aplicación
-├── package.json                      # Dependencias y scripts
-├── src/
-│   ├── server.js                     # Configuración del servidor Express
-│   ├── controllers/                  # Controladores de la aplicación
-│   │   └── users/
-│   │       └── users.controllers.js  # Controlador de usuarios
-│   ├── lib/
-│   │   └── db.js                     # Configuración de la base de datos
-│   ├── models/                       # Modelos de datos
-│   │   ├── index.js                  # Exportaciones de modelos
-│   │   └── users/
-│   │       └── users.model.js        # Modelo de usuarios
-│   └── routes/                       # Definición de rutas
-│       └── users/
-│           └── users.routes.js       # Rutas de usuarios
-├── migrations/                       # Migraciones de base de datos
-│   └── survey_system_db              # Migración para crear la tabla de usuarios
-├── .env                              # Variables de entorno
-├── .gitignore                        # Archivos a ignorar por Git
-└── README.md                         # Documentación del proyecto
-```
-
 ## ⚡ Instalación y Configuración
 
 ### Prerrequisitos
