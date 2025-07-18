@@ -1,5 +1,7 @@
 import * as dotenv from 'dotenv'
 
+dotenv.config({ path: '.env' })
+
 /**
  * Application configuration object.
  * @namespace config
@@ -22,11 +24,11 @@ export const config = {
     port: process.env.DB_PORT || 5432,
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'root',
-    name: process.env.DB_NAME || 'survey_db'
+    name: process.env.DB_NAME || 'agrosig_db'
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'secret',
-    expireIn: process.env.EXPIRE_IN || '12h'
+    secret: process.env.JWT_SECRET,
+    expireIn: process.env.JWT_EXPIRE_IN
   },
   env: process.env.NODE_ENV || 'development'
 }
