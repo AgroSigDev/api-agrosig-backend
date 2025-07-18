@@ -1,10 +1,10 @@
 # API AGROSIG BACKEND 📊
 
-Un sistema de API REST para la optimización y gestion del uso de recursos agrícolas desarrollado como proyecto Integrador de DAVIDCH.
+Un sistema de API REST para la optimización y gestion del uso de recursos agrícolas desarrollado como proyecto Integrador.
 
 ## 📋 Descripción
 
-API AGROSIG BACKEND es una aplicacion contruida con node.js y express que propociona endpoints para la gestion de usaurios y de la agrícultura siendo una herramienta que permita a los agricultores optimizar el uso de sus recursos. El sistema está diseñado para ser escalable y fácil de mantener, utilizando PostgreSQL como base de datos.
+API AGROSIG BACKEND es una aplicacion construida con node.js y express que propociona endpoints para la gestion de usaurios y de la agrícultura siendo una herramienta que permita a los agricultores optimizar el uso de sus recursos. El sistema está diseñado para ser escalable y fácil de mantener, utilizando PostgreSQL como base de datos.
 
 ## 🚀 Características
 
@@ -73,7 +73,7 @@ npm start
 
 El servidor se ejecutará en `http://localhost:4000` (o el puerto configurado en las variables de entorno).
 
-## 👥 Autores
+## 👥 Autor
 - **David Hernández** - [@Dave0097-hdz](https://github.com/Dave0097-hdz)
 
 ## 📄 Licencia
