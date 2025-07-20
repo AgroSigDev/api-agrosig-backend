@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import http from 'http'
 import userRouter from './routes/users/users.routes.js'
+import authRouter from './routes/auth/auth.routes.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -22,6 +23,8 @@ app.use('/images', express.static(path.join(__dirname, 'src/uploads/profile')))
 
 // Rutas - Endpoints
 app.use('/users', userRouter)
+
+app.use('/auth', authRouter)
 
 // Ruta Raiz
 app.get('/', (request, response) => {
