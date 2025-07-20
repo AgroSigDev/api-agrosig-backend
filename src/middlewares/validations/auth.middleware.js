@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken'
+import { verifyToken } from '../../helpers/jwt.helper.js'
 
 /**
  * Middleware to verify JWT token from the Authorization header.
@@ -13,7 +13,7 @@ import jwt from 'jsonwebtoken'
  * @param {import('express').NextFunction} next - Express next middleware function.
  * @returns {void}
  */
-export const verifyToken = (request, response, next) => {
+export const autenticate = (request, response, next) => {
   const token = request.header('Authorization')
 
   if (!token) {
@@ -37,8 +37,7 @@ export const verifyToken = (request, response, next) => {
   }
 
   try {
-    const secretKey = process.env.JWT_SECRET
-    const decoded = jwt.verify(bearer, secretKey)
+    const decoded = verifyToken(bearer)
 
     if (!decoded.user_id) {
       return response.status(401).json({

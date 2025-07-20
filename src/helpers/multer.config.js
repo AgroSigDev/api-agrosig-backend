@@ -13,7 +13,7 @@ const storageProfile = multer.diskStorage({
 })
 
 const multerFilter = (req, file, cb) => {
-  if (!file.originalname.match(/\.(png|jpg)$/)) {
+  if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
     // cargar solo formatos png y jpg
     return cb(new Error('Por favor, cargue una imagen'))
   }

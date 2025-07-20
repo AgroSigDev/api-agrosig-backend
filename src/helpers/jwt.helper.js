@@ -19,4 +19,17 @@ function createToken (user) {
   return jwt.sign(payload, config.jwt.secret, { expiresIn: config.jwt.expireIn })
 }
 
-export { createToken }
+/**
+ * Verifies a JWT token and returns the decoded payload.
+ *
+ * @param {string} bearer - The JWT token to verify.
+ * @returns {Object} The decoded token payload.
+ * @throws {Error} If the token is invalid or verification fails.
+ */
+
+function verifyToken (bearer) {
+  const decoded = jwt.verify(bearer, config.jwt.secret)
+  return decoded
+}
+
+export { createToken, verifyToken }
