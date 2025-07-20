@@ -5,6 +5,12 @@ async function registerUser (user) {
   return data
 }
 
+async function loginUser (user) {
+  const data = await Auth.loginUser(user)
+  return data
+}
+
 export {
-  registerUser
+  registerUser,
+  loginUser
 }

@@ -1,29 +1,92 @@
 import express from 'express'
-import { registerUser } from '../../controllers/auth/auth.controller.js'
-import { uploadProfile } from '../../helpers/multer.config.js'
+import { getAllUsers, getUserById, updateUserById, updateUserPassword, deleteUserById } from '../../controllers/index.js'
+import { autenticate } from '../../middlewares/validations/auth.middleware.js'
 
 const router = express.Router()
 
-router.post('/register', uploadProfile, async (request, response, next) => {
+// GET /users/:id
+router.get('/:id', autenticate, async (request, response, next) => {
   try {
-    const user = request.body
-    if (request.file) {
-      user.image_user = request.filename // Asignar la ruta de la imagen al usuario
+    const userId = request.params.id
+    const result = await getUserById(userId)
+    if (!result) {
+      return response.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      })
     }
-    const result = await registerUser(user)
-    response.status(201).json({
+    response.status(200).json({
       success: true,
-      message: 'User created successfully',
-      data: result.result,
-      token: result.token
+      data: result
     })
   } catch (error) {
-    console.error('Error registering user:', error)
-    response.status(500).json({
-      success: false,
-      message: 'Error registering user',
-      error: error.message
+    next(error)
+  }
+})
+
+// GET /users
+router.get('/', autenticate, async (request, response, next) => {
+  try {
+    const result = await getAllUsers()
+    response.status(200).json({
+      success: true,
+      data: result
     })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// PATCH /users/:id
+router.patch('/:id', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.params.id
+    const userData = request.body
+    const result = await updateUserById(userId, userData)
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// PATCH /users/:id/password
+router.patch('/password/:id', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.params.id
+    const { oldPassword, newPassword, repeatedPassword } = request.body
+
+    const result = await updateUserPassword(
+      userId,
+      oldPassword,
+      newPassword,
+      repeatedPassword
+    )
+    response.status(200).json({
+      success: true,
+      data: {
+        message: 'Password updated successfully',
+        user: result
+      }
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// DELETE /users/:id
+router.delete('/:id', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.params.id
+    await deleteUserById(userId)
+    response.status(204).json({
+      success: true,
+      message: 'Usuario eliminado exitosamente'
+    })
+  } catch (error) {
+    next(error)
   }
 })
 
