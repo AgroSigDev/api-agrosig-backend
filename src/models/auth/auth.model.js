@@ -7,7 +7,7 @@ import {
   validateFieldsLogin,
   comparePasswords
 } from '../../middlewares/index.js'
-import { generateAuthToken } from '../../utils/token.utils.js'
+import { generateAuthToken, generateRefreshToken } from '../../utils/token.utils.js'
 
 /**
  * Registers a new user in the system.
@@ -104,8 +104,12 @@ async function loginUser (user) {
   }
 
   const token = generateAuthToken(foundUser)
+  const refreshToken = generateRefreshToken(foundUser)
 
-  return token
+  return {
+    token,
+    refreshToken
+  }
 }
 
 /**
