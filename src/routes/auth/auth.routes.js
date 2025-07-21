@@ -1,6 +1,6 @@
 import express from 'express'
 import { registerUser, loginUser } from '../../controllers/index.js'
-import { uploadProfile } from '../../helpers/multer.config.js'
+import { uploadProfile } from '../../helpers/index.js'
 
 const router = express.Router()
 
