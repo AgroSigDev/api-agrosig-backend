@@ -19,6 +19,14 @@ function createToken (user) {
   return jwt.sign(payload, config.jwt.secret, { expiresIn: config.jwt.expireIn })
 }
 
+function createRefresToken (user) {
+  const payload = {
+    user_id: user.user_id,
+    role_id: user.role_id
+  }
+  return jwt.sign(payload, config.jwt.refreshSecret, { expiresIn: config.jwt.refresTokenExpireIn })
+}
+
 /**
  * Verifies a JWT token and returns the decoded payload.
  *
@@ -27,9 +35,12 @@ function createToken (user) {
  * @throws {Error} If the token is invalid or verification fails.
  */
 
-function verifyToken (bearer) {
-  const decoded = jwt.verify(bearer, config.jwt.secret)
-  return decoded
+function verifyToken (token) {
+  return jwt.verify(token, config.jwt.secret)
 }
 
-export { createToken, verifyToken }
+function verifyRefresToken (token) {
+  return jwt.verify(token, config.jwt.refreshSecret)
+}
+
+export { createToken, createRefresToken, verifyToken, verifyRefresToken }
