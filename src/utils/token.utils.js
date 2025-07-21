@@ -1,4 +1,4 @@
-import { createToken } from '../helpers/jwt.helper.js'
+import { createToken, createRefresToken } from '../helpers/jwt.helper.js'
 
 /**
  * Generates an authentication token for a given user.
@@ -10,11 +10,11 @@ import { createToken } from '../helpers/jwt.helper.js'
  */
 
 function generateAuthToken (user) {
-  const payload = {
-    user_id: user.user_id,
-    role_id: user.role_id
-  }
-  return createToken(payload)
+  return createToken(user)
 }
 
-export { generateAuthToken }
+function generateRefreshToken (user) {
+  return createRefresToken(user)
+}
+
+export { generateAuthToken, generateRefreshToken }

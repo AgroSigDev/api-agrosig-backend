@@ -15,8 +15,10 @@ dotenv.config({ path: '.env' })
  * @property {Object} jwt - JWT authentication configuration.
  * @property {string} jwt.secret - JWT secret key. Defaults to 'secret'.
  * @property {string} jwt.expireIn - JWT expiration time. Defaults to '12h'.
+ * @property {string} jwt.refreshSecret - JWT refresh secret key. Defaults to 'refreshSecret'.
  * @property {string} env - Application environment. Defaults to 'development'.
  */
+
 export const config = {
   port: process.env.PORT || 4000,
   db: {
@@ -28,7 +30,9 @@ export const config = {
   },
   jwt: {
     secret: process.env.JWT_SECRET,
-    expireIn: process.env.JWT_EXPIRE_IN
+    expireIn: process.env.JWT_EXPIRE_IN,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    refresTokenExpireIn: process.env.JWT_REFRESH_EXPIRE_IN
   },
   env: process.env.NODE_ENV || 'development'
 }
