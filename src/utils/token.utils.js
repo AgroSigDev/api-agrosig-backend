@@ -1,4 +1,4 @@
-import { createToken, createRefresToken } from '../helpers/jwt.helper.js'
+import { createToken, createRefresToken } from '../helpers//index.js'
 
 /**
  * Generates an authentication token for a given user.

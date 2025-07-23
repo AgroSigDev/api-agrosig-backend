@@ -102,6 +102,28 @@ async function updateUserPassword (userId, oldPassword, newPassword, repeatedPas
   }
 }
 
+async function updateImageUserById (userId, nweImagePath) {
+  try {
+    const existingUser = await getUserById(userId)
+    if (!existingUser) {
+      throw new Error('User not found')
+    }
+
+    const query = {
+      text: 'UPDATE users SET image_user = $1, updated_at = now() WHERE user_id = $2 RETURNING *',
+      values: [nweImagePath, userId]
+    }
+    const result = await pool.query(query)
+    return {
+      user: result.rows[0],
+      oldImagePath: existingUser.image_user || null
+    }
+  } catch (error) {
+    console.error('Error updating user image by ID:', error)
+    throw error
+  }
+}
+
 async function getUserByEmail (email) {
   try {
     const query = {
@@ -139,6 +161,7 @@ export const Users = {
   getAllUsers,
   updateUserById,
   updateUserPassword,
+  updateImageUserById,
   getUserByEmail,
   deleteUserById
 }
