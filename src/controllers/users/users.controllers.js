@@ -30,6 +30,11 @@ async function updateUserPassword (userId, oldPassword, newPassword, repeatedPas
   return result
 }
 
+async function updateImageUserById (userId, imagePath) {
+  const result = await Users.updateImageUserById(userId, imagePath)
+  return result
+}
+
 async function deleteUserById (userId) {
   await Users.deleteUserById(userId)
 }
@@ -40,5 +45,6 @@ export {
   getUserByEmail,
   updateUserById,
   updateUserPassword,
+  updateImageUserById,
   deleteUserById
 }
