@@ -62,9 +62,36 @@ async function validateEmialFormart (email) {
   }
 }
 
+async function validFieldsRegisterPlot (plot) {
+  if (
+    !plot.plot_name ||
+    !plot.location ||
+    !plot.area
+  ) {
+    console.error('Missing fields in plot registration:', plot)
+    throw new Error('There are missing fields to submit in the application')
+  }
+}
+
+async function validateLocationPlot (location) {
+  const locationRegex = /^[a-zA-Z0-9\s,.'-]{3,}$/
+  if (!locationRegex.test(location)) {
+    throw new Error('Invalid location format')
+  }
+}
+
+async function validateArea (area) {
+  if (isNaN(area) || area <= 0) {
+    throw new Error('Area must be a positive number')
+  }
+}
+
 export {
   validFieldsRegister,
   validateFieldsLogin,
   vaidateStringLength,
-  validateEmialFormart
+  validateEmialFormart,
+  validFieldsRegisterPlot,
+  validateLocationPlot,
+  validateArea
 }
