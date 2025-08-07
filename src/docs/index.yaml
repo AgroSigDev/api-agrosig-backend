@@ -1,0 +1,1097 @@
+openapi: 3.1.0
+info:
+  title: API AGROSIG BACKEND
+  version: 1.0.0
+  description: Documentación para la API REST de un proyecto INTEGRADOR - API AGROSIG
+    BACKEND - DAVIDCH
+  Servers: 
+    - url: http:localhost:4000/api-docs
+  components:
+    securitySchemes:
+      BearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+  security:
+    - BearerAuth: []
+  _postman_id: 904daebd-1bb9-4a0e-9321-9852845988b8
+  name: Api-AgroSig-Backend
+  schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
+  _exporter_id: '36380973'
+  _collection_link: >-
+    https://api-backend-agrosig.postman.co/workspace/Api-Backend-Agrosig-Workspace~1d5f9651-c1ff-496d-8b69-c1f76c150c1c/collection/36380973-904daebd-1bb9-4a0e-9321-9852845988b8?action=share&source=collection_link&creator=36380973
+item:
+  - name: register
+    request:
+      method: POST
+      header:
+        - key: Content-Type
+          value: multipart/form-data
+          type: text
+          disabled: true
+      body:
+        mode: formdata
+        formdata:
+          - key: first_name
+            value: Gabriel
+            type: text
+          - key: paternal_surname
+            value: Perez
+            type: text
+          - key: maternal_surname
+            value: Gomez
+            type: text
+          - key: email
+            value: prueba@gmail.com
+            type: text
+          - key: password
+            value: '12345678'
+            type: text
+          - key: image_user
+            type: file
+            src: '/C:/Users/david/Downloads/9b558fbe-f8c1-4921-844b-39f363594d32.png'
+      url:
+        raw: '{{base_url}}/auth/register'
+        host:
+          - '{{base_url}}'
+        path:
+          - auth
+          - register
+    response:
+      - name: '500'
+        originalRequest:
+          method: POST
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+          body:
+            mode: formdata
+            formdata:
+              - key: first_name
+                value: Juan
+                type: text
+              - key: paternal_surname
+                value: Villanueva
+                type: text
+              - key: maternal_surname
+                value: Gomez
+                type: text
+              - key: email
+                value: juan76goer@gmail.com
+                type: text
+              - key: password
+                value: '12345678'
+                type: text
+              - key: image_user
+                type: file
+                src: >-
+                  /C:/Users/david/Downloads/9b558fbe-f8c1-4921-844b-39f363594d32.png
+            options:
+              raw:
+                language: json
+          url:
+            raw: '{{base_url}}/auth/register'
+            host:
+              - '{{base_url}}'
+            path:
+              - auth
+              - register
+        status: Internal Server Error
+        code: 500
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '82'
+          - key: ETag
+            value: W/"52-0OOZEt1dsBRnz2oJSrm035ClnSA"
+          - key: Date
+            value: 'Fri, 18 Jul 2025 04:32:10 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": false,
+              "message": "Error registering user",
+              "error": "User already exists"
+          }
+      - name: '201'
+        originalRequest:
+          method: POST
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+          body:
+            mode: formdata
+            formdata:
+              - key: first_name
+                value: Gabriel
+                type: text
+              - key: paternal_surname
+                value: Perez
+                type: text
+              - key: maternal_surname
+                value: Gomez
+                type: text
+              - key: email
+                value: ga78goher@gmail.com
+                type: text
+              - key: password
+                value: '12345678'
+                type: text
+              - key: image_user
+                type: file
+                src: >-
+                  /C:/Users/david/Downloads/9b558fbe-f8c1-4921-844b-39f363594d32.png
+            options:
+              raw:
+                language: json
+          url:
+            raw: '{{base_url}}/auth/register'
+            host:
+              - '{{base_url}}'
+            path:
+              - auth
+              - register
+        status: Created
+        code: 201
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '595'
+          - key: ETag
+            value: W/"253-p/qlcbKINIe26zO/ek/a+Dtpz4A"
+          - key: Date
+            value: 'Fri, 18 Jul 2025 04:35:38 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "message": "User created successfully",
+              "data": {
+                  "user_id": 5,
+                  "google_id": null,
+                  "role_id": 2,
+                  "first_name": "Gabriel",
+                  "paternal_surname": "Perez",
+                  "maternal_surname": "Gomez",
+                  "email": "ga78goher@gmail.com",
+                  "password": "$2b$10$t.y0aksFFaSFiOEKUpyO7OdQ8xcSpemHsDT9r5AKbF8HQ0Jd/YT1q",
+                  "image_user": null,
+                  "configured_plot": false,
+                  "is_active": true,
+                  "created_at": "2025-07-18T04:35:38.621Z",
+                  "updated_at": "2025-07-18T04:35:38.621Z"
+              },
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo1LCJyb2xlX2lkIjoyLCJpYXQiOjE3NTI4MTMzMzgsImV4cCI6MTc1Mjg1NjUzOH0.ab5jtet8h_iBN9QLpPurpnBylaiaC65EzhGC-ojUwbM"
+          }
+  - name: login
+    request:
+      method: POST
+      header:
+        - key: Content-Type
+          value: multipart/form-data
+          type: text
+          disabled: true
+      body:
+        mode: raw
+        raw: "{\r\n    \"email\": \"ga78goher@gmail.com\",\r\n    \"password\": \"12345678\"\r\n}"
+        options:
+          raw:
+            language: json
+      url:
+        raw: '{{base_url}}/auth/login'
+        host:
+          - '{{base_url}}'
+        path:
+          - auth
+          - login
+    response:
+      - name: login
+        originalRequest:
+          method: POST
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+          body:
+            mode: raw
+            raw: "{\r\n    \"email\": \"ga78goher@gmail.com\",\r\n    \"password\": \"12345678\"\r\n}"
+            options:
+              raw:
+                language: json
+          url:
+            raw: '{{base_url}}/auth/login'
+            host:
+              - '{{base_url}}'
+            path:
+              - auth
+              - login
+        status: OK
+        code: 200
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '414'
+          - key: ETag
+            value: W/"19e-Zut5SjaeLQYgXTAiKjIoxvWGlNc"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 01:29:51 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "message": "User logged in successfully",
+              "data": {
+                  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjEzOTEsImV4cCI6MTc1MzEwNDU5MX0.sPBiV8xssDBLx8xfxYMFzJf2gigZJ_8OmVSqXXidLPI",
+                  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjEzOTEsImV4cCI6MTc1MzY2NjE5MX0.W44CnFp1FsmLO-asDXAW7sOlZ2XBBOZWflqOAJpT8Og"
+              }
+          }
+  - name: getAllUsers
+    request:
+      method: GET
+      header:
+        - key: Authorization
+          value: >-
+            Bearer
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjAzOTUsImV4cCI6MTc1MzEwMzU5NX0.mJSoVWx81W64loayKU9cnjavIt83o5_Or0yLZfuYQdE
+          type: text
+          disabled: true
+        - key: x-refresh-token
+          value: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjAzOTUsImV4cCI6MTc1MzY2NTE5NX0.0vi4yYNgyxKkYG0pGH6EY79pX09tdju36HxsoSuF2fk
+          type: text
+          disabled: true
+      url:
+        raw: '{{base_url}}/users/'
+        host:
+          - '{{base_url}}'
+        path:
+          - users
+          - ''
+    response:
+      - name: '200'
+        originalRequest:
+          method: GET
+          header: []
+          url:
+            raw: '{{base_url}}/users/'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - ''
+        status: OK
+        code: 200
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '415'
+          - key: ETag
+            value: W/"19f-oCaEFT9Ddy8/Njfjjfxqc7Hoefg"
+          - key: Date
+            value: 'Sun, 20 Jul 2025 05:44:16 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "data": [
+                  {
+                      "user_id": 1,
+                      "google_id": null,
+                      "role_id": 2,
+                      "first_name": "Angel",
+                      "paternal_surname": "Hernandez",
+                      "maternal_surname": "Castillo",
+                      "email": "ga78goher@gmail.com",
+                      "password": "$2b$10$v6BAahd0.jkrq.gJW5iwOeeHIVkBCcy/.AG9E016euG0kuZo0sjB2",
+                      "image_user": "image-1752814134325.jpeg",
+                      "configured_plot": false,
+                      "is_active": true,
+                      "created_at": "2025-07-18T04:48:54.448Z",
+                      "updated_at": "2025-07-18T04:48:54.448Z"
+                  }
+              ]
+          }
+      - name: '403'
+        originalRequest:
+          method: GET
+          header:
+            - key: Authorization
+              value: >-
+                Bearer
+                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjAzOTUsImV4cCI6MTc1MzEwMzU5NX0.mJSoVWx81W64loayKU9cnjavIt83o5_Or0yLZfuYQdE
+              type: text
+              disabled: true
+            - key: x-refresh-token
+              value: >-
+                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjAzOTUsImV4cCI6MTc1MzY2NTE5NX0.0vi4yYNgyxKkYG0pGH6EY79pX09tdju36HxsoSuF2fk
+              type: text
+              disabled: true
+          url:
+            raw: '{{base_url}}/users/'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - ''
+        status: Forbidden
+        code: 403
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '71'
+          - key: ETag
+            value: W/"47-xXLIpWRTaQDehNr7VYr4L/ZNaBk"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 01:59:27 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": false,
+              "message": "Unauthorized access, the token is missing"
+          }
+  - name: getUserById
+    request:
+      method: GET
+      header: []
+      url:
+        raw: '{{base_url}}/users/2'
+        host:
+          - '{{base_url}}'
+        path:
+          - users
+          - '2'
+    response:
+      - name: '200'
+        originalRequest:
+          method: GET
+          header: []
+          url:
+            raw: '{{base_url}}/users/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - '1'
+        status: OK
+        code: 200
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '413'
+          - key: ETag
+            value: W/"19d-Ox05B1drqIEtlcouqKviBH+ekgM"
+          - key: Date
+            value: 'Sun, 20 Jul 2025 05:46:12 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "data": {
+                  "user_id": 1,
+                  "google_id": null,
+                  "role_id": 2,
+                  "first_name": "Angel",
+                  "paternal_surname": "Hernandez",
+                  "maternal_surname": "Castillo",
+                  "email": "ga78goher@gmail.com",
+                  "password": "$2b$10$v6BAahd0.jkrq.gJW5iwOeeHIVkBCcy/.AG9E016euG0kuZo0sjB2",
+                  "image_user": "image-1752814134325.jpeg",
+                  "configured_plot": false,
+                  "is_active": true,
+                  "created_at": "2025-07-18T04:48:54.448Z",
+                  "updated_at": "2025-07-18T04:48:54.448Z"
+              }
+          }
+      - name: '403'
+        originalRequest:
+          method: GET
+          header: []
+          url:
+            raw: '{{base_url}}/users/2'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - '2'
+        status: Forbidden
+        code: 403
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '71'
+          - key: ETag
+            value: W/"47-xXLIpWRTaQDehNr7VYr4L/ZNaBk"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 01:59:42 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": false,
+              "message": "Unauthorized access, the token is missing"
+          }
+  - name: updateUserById
+    request:
+      method: PATCH
+      header:
+        - key: Content-Type
+          value: multipart/form-data
+          type: text
+          disabled: true
+      body:
+        mode: raw
+        raw: "{\r\n    \"first_name\": \"Daniel\",\r\n    \"paternal_surname\": \"Garcia\",\r\n    \"maternal_surname\": \"Perez\",\r\n    \"email\": \"juangoher@gmail.com\"\r\n}"
+        options:
+          raw:
+            language: json
+      url:
+        raw: '{{base_url}}/users/1'
+        host:
+          - '{{base_url}}'
+        path:
+          - users
+          - '1'
+    response:
+      - name: '200'
+        originalRequest:
+          method: PATCH
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+          body:
+            mode: raw
+            raw: "{\r\n    \"first_name\": \"Daniel\",\r\n    \"paternal_surname\": \"Garcia\",\r\n    \"maternal_surname\": \"Perez\",\r\n    \"email\": \"juangoher@gmail.com\"\r\n}"
+            options:
+              raw:
+                language: json
+          url:
+            raw: '{{base_url}}/users/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - '1'
+        status: OK
+        code: 200
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '408'
+          - key: ETag
+            value: W/"198-ZkUAVTT+OTn5GcHQcfZ1+g1+O+Q"
+          - key: Date
+            value: 'Sun, 20 Jul 2025 05:57:40 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "data": {
+                  "user_id": 1,
+                  "google_id": null,
+                  "role_id": 2,
+                  "first_name": "Daniel",
+                  "paternal_surname": "Garcia",
+                  "maternal_surname": "Perez",
+                  "email": "juangoher@gmail.com",
+                  "password": "$2b$10$v6BAahd0.jkrq.gJW5iwOeeHIVkBCcy/.AG9E016euG0kuZo0sjB2",
+                  "image_user": "image-1752814134325.jpeg",
+                  "configured_plot": false,
+                  "is_active": true,
+                  "created_at": "2025-07-18T04:48:54.448Z",
+                  "updated_at": "2025-07-18T04:48:54.448Z"
+              }
+          }
+      - name: '403'
+        originalRequest:
+          method: PATCH
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+          body:
+            mode: raw
+            raw: "{\r\n    \"first_name\": \"Daniel\",\r\n    \"paternal_surname\": \"Garcia\",\r\n    \"maternal_surname\": \"Perez\",\r\n    \"email\": \"juangoher@gmail.com\"\r\n}"
+            options:
+              raw:
+                language: json
+          url:
+            raw: '{{base_url}}/users/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - '1'
+        status: Forbidden
+        code: 403
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '71'
+          - key: ETag
+            value: W/"47-xXLIpWRTaQDehNr7VYr4L/ZNaBk"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 01:58:11 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": false,
+              "message": "Unauthorized access, the token is missing"
+          }
+  - name: updatePasswordById
+    event:
+      - listen: test
+        script:
+          exec:
+            - ''
+          type: text/javascript
+          packages: {}
+    request:
+      method: PATCH
+      header: []
+      body:
+        mode: raw
+        raw: "{\r\n  \"oldPassword\": \"12345678\",\r\n  \"newPassword\": \"123456789\",\r\n  \"repeatedPassword\": \"123456789\"\r\n}\r\n"
+        options:
+          raw:
+            language: json
+      url:
+        raw: '{{base_url}}/users/password/1'
+        host:
+          - '{{base_url}}'
+        path:
+          - users
+          - password
+          - '1'
+    response:
+      - name: '200'
+        originalRequest:
+          method: PATCH
+          header: []
+          body:
+            mode: raw
+            raw: "{\r\n  \"oldPassword\": \"12345678\",\r\n  \"newPassword\": \"123456789\",\r\n  \"repeatedPassword\": \"123456789\"\r\n}\r\n"
+            options:
+              raw:
+                language: json
+          url:
+            raw: '{{base_url}}/users/password/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - password
+              - '1'
+        status: OK
+        code: 200
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '459'
+          - key: ETag
+            value: W/"1cb-tMaTBGij0fA04i8PbG+vtpJeFR8"
+          - key: Date
+            value: 'Sun, 20 Jul 2025 20:06:52 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "data": {
+                  "message": "Password updated successfully",
+                  "user": {
+                      "user_id": 1,
+                      "google_id": null,
+                      "role_id": 2,
+                      "first_name": "Daniel",
+                      "paternal_surname": "Garcia",
+                      "maternal_surname": "Perez",
+                      "email": "juangoher@gmail.com",
+                      "password": "$2b$10$jAI0fF7bysU.30EE1gvcSeVb/AcPR01hghWfY3.uq4s8XnUSSzMvC",
+                      "image_user": "image-1752814134325.jpeg",
+                      "configured_plot": false,
+                      "is_active": true,
+                      "created_at": "2025-07-18T04:48:54.448Z",
+                      "updated_at": "2025-07-18T04:48:54.448Z"
+                  }
+              }
+          }
+      - name: '403'
+        originalRequest:
+          method: PATCH
+          header: []
+          body:
+            mode: raw
+            raw: "{\r\n  \"oldPassword\": \"12345678\",\r\n  \"newPassword\": \"123456789\",\r\n  \"repeatedPassword\": \"123456789\"\r\n}\r\n"
+            options:
+              raw:
+                language: json
+          url:
+            raw: '{{base_url}}/users/password/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - password
+              - '1'
+        status: Forbidden
+        code: 403
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '71'
+          - key: ETag
+            value: W/"47-xXLIpWRTaQDehNr7VYr4L/ZNaBk"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 02:00:12 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": false,
+              "message": "Unauthorized access, the token is missing"
+          }
+  - name: deleteUserById
+    request:
+      method: DELETE
+      header:
+        - key: Content-Type
+          value: multipart/form-data
+          type: text
+          disabled: true
+      body:
+        mode: raw
+        raw: "{\r\n    \"first_name\": \"Daniel\",\r\n    \"paternal_surname\": \"Garcia\",\r\n    \"maternal_surname\": \"Perez\",\r\n    \"email\": \"juangoher@gmail.com\"\r\n}"
+      url:
+        raw: '{{base_url}}/users/2'
+        host:
+          - '{{base_url}}'
+        path:
+          - users
+          - '2'
+    response:
+      - name: '204'
+        originalRequest:
+          method: DELETE
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+          body:
+            mode: raw
+            raw: "{\r\n    \"first_name\": \"Daniel\",\r\n    \"paternal_surname\": \"Garcia\",\r\n    \"maternal_surname\": \"Perez\",\r\n    \"email\": \"juangoher@gmail.com\"\r\n}"
+          url:
+            raw: '{{base_url}}/users/2'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - '2'
+        status: No Content
+        code: 204
+        _postman_previewlanguage: plain
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: ETag
+            value: W/"3b-MIPmgQdmj4qAeHe/YI5SqIwLK4U"
+          - key: Date
+            value: 'Sun, 20 Jul 2025 19:41:28 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: null
+      - name: deleteUserById
+        originalRequest:
+          method: DELETE
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+          body:
+            mode: raw
+            raw: "{\r\n    \"first_name\": \"Daniel\",\r\n    \"paternal_surname\": \"Garcia\",\r\n    \"maternal_surname\": \"Perez\",\r\n    \"email\": \"juangoher@gmail.com\"\r\n}"
+          url:
+            raw: '{{base_url}}/users/2'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - '2'
+        status: Forbidden
+        code: 403
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '71'
+          - key: ETag
+            value: W/"47-xXLIpWRTaQDehNr7VYr4L/ZNaBk"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 02:00:24 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": false,
+              "message": "Unauthorized access, the token is missing"
+          }
+  - name: updateImageUser
+    request:
+      method: PATCH
+      header:
+        - key: Authorization
+          value: >-
+            Bearer
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjMwNzksImV4cCI6MTc1MzEwNjI3OX0.Pkp-GJ451h-4UIeeK50PKjocHkyIHGm0jSOuWNis9Co
+          type: text
+        - key: Content-Type
+          value: multipart/form-data
+          type: text
+      body:
+        mode: formdata
+        formdata:
+          - key: image_user
+            type: file
+            src: '/C:/Users/david/Downloads/descarga.jpeg'
+      url:
+        raw: '{{base_url}}/users/image/1'
+        host:
+          - '{{base_url}}'
+        path:
+          - users
+          - image
+          - '1'
+    response:
+      - name: '200'
+        originalRequest:
+          method: PATCH
+          header:
+            - key: Authorization
+              value: >-
+                Bearer
+                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjMwNzksImV4cCI6MTc1MzEwNjI3OX0.Pkp-GJ451h-4UIeeK50PKjocHkyIHGm0jSOuWNis9Co
+              type: text
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+          body:
+            mode: formdata
+            formdata:
+              - key: image_user
+                type: file
+                src: '/C:/Users/david/Downloads/descarga.jpeg'
+          url:
+            raw: '{{base_url}}/users/image/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - image
+              - '1'
+        status: OK
+        code: 200
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '136'
+          - key: ETag
+            value: W/"88-s45eTN6mnOq6Uscv6VfrHnY5eHc"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 05:16:52 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "message": "Imagen de usuario actualizada correctamente",
+              "data": {
+                  "imageUrl": "/uploads/profile/image-1753075012571.jpeg"
+              }
+          }
+      - name: '403'
+        originalRequest:
+          method: PATCH
+          header:
+            - key: Authorization
+              value: >-
+                Bearer
+                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTMwNjMwNzksImV4cCI6MTc1MzEwNjI3OX0.Pkp-GJ451h-4UIeeK50PKjocHkyIHGm0jSOuWNis9Co
+              type: text
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+          body:
+            mode: formdata
+            formdata:
+              - key: image_user
+                type: file
+                src: '/C:/Users/david/Downloads/descarga.jpeg'
+          url:
+            raw: '{{base_url}}/users/image/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - users
+              - image
+              - '1'
+        status: Forbidden
+        code: 403
+        _postman_previewlanguage: json
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '71'
+          - key: ETag
+            value: W/"47-xXLIpWRTaQDehNr7VYr4L/ZNaBk"
+          - key: Date
+            value: 'Mon, 21 Jul 2025 05:17:39 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": false,
+              "message": "Unauthorized access, the token is missing"
+          }
+  - name: register-plot
+    request:
+      method: POST
+      header:
+        - key: Content-Type
+          value: multipart/form-data
+          type: text
+          disabled: true
+        - key: Authorization
+          value: >-
+            Bearer
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTM0MjU2MDcsImV4cCI6MTc1MzQ2ODgwN30.IDShLrc88nswT-8QLlmjOYv3D1Dx8t-l14rChffr-mE
+          type: text
+      body:
+        mode: raw
+        raw: "{\r\n    \"id_user\": \"1\",\r\n    \"nombre\": \"Parcela 1\",\r\n    \"ubicacion\": \"17.206130,-93.025273\",\r\n    \"superficie\": 200.5\r\n}"
+        options:
+          raw:
+            language: json
+      url:
+        raw: '{{base_url}}/plots/register'
+        host:
+          - '{{base_url}}'
+        path:
+          - plots
+          - register
+    response: []
+  - name: getPlotById
+    request:
+      method: GET
+      header: []
+    response:
+      - name: '200'
+        originalRequest:
+          method: GET
+          header:
+            - key: Content-Type
+              value: multipart/form-data
+              type: text
+              disabled: true
+            - key: Authorization
+              value: >-
+                Bearer
+                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlX2lkIjoyLCJpYXQiOjE3NTQ0MDc4NDgsImV4cCI6MTc1NDQ1MTA0OH0.vMYt3YZl4Zp_VzRtVTjLVvj_PfVCplAKCkDxTSDndkc
+              type: text
+          body:
+            mode: raw
+            raw: ''
+          url:
+            raw: '{{base_url}}/plots/ubication-plot/1'
+            host:
+              - '{{base_url}}'
+            path:
+              - plots
+              - ubication-plot
+              - '1'
+        status: OK
+        code: 200
+        _postman_previewlanguage: null
+        header:
+          - key: X-Powered-By
+            value: Express
+          - key: Access-Control-Allow-Origin
+            value: '*'
+          - key: Content-Type
+            value: application/json; charset=utf-8
+          - key: Content-Length
+            value: '151'
+          - key: ETag
+            value: W/"97-jqcWiJyozNkwi7xVPFx+OmFHhvo"
+          - key: Date
+            value: 'Tue, 05 Aug 2025 15:52:38 GMT'
+          - key: Connection
+            value: keep-alive
+          - key: Keep-Alive
+            value: timeout=5
+        cookie: []
+        body: |-
+          {
+              "success": true,
+              "data": [
+                  {
+                      "plot_id": 1,
+                      "user_id": 1,
+                      "plot_name": "Parcela 1",
+                      "location": "Rayon, Chiapas",
+                      "lat": -93.025273,
+                      "long": 17.20613,
+                      "area": "200.5"
+                  }
+              ]
+          }
+  - name: New Request
+    request:
+      method: GET
+      header: []
+    response: []
