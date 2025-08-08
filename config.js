@@ -34,5 +34,9 @@ export const config = {
     refreshSecret: process.env.JWT_REFRESH_SECRET,
     refresTokenExpireIn: process.env.JWT_REFRESH_EXPIRE_IN
   },
+  docs: {
+    urlDocs: process.env.ENDPOINT_SWAGGER,
+    baseUrl: process.env.BASE_URL
+  },
   env: process.env.NODE_ENV || 'development'
 }

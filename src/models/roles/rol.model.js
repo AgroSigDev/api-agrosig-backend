@@ -70,7 +70,7 @@ async function getRoleBYId (roleId) {
   }
 }
 
-export const UsersRoles = {
+export const Role = {
   getUserByIdRole,
   getAllUsers,
   getRoleBYId
