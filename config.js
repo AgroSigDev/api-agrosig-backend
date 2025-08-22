@@ -38,5 +38,8 @@ export const config = {
     urlDocs: process.env.ENDPOINT_SWAGGER,
     baseUrl: process.env.BASE_URL
   },
+  weather: {
+    appid: process.env.API_CLIMA
+  },
   env: process.env.NODE_ENV || 'development'
 }
