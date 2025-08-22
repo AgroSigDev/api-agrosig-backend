@@ -6,6 +6,7 @@ import { config } from '../config.js'
 import userRouter from './routes/users/users.routes.js'
 import authRouter from './routes/auth/auth.routes.js'
 import plotRouter from './routes/plots/plots.routes.js'
+import weatherPlot from './routes/weather/weather.routes.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -31,6 +32,7 @@ app.use('/images', express.static(path.join(__dirname, 'src/uploads/profile')))
 app.use('/users', userRouter)
 app.use('/auth', authRouter)
 app.use('/plots', plotRouter)
+app.use('/weather', weatherPlot)
 
 // Ruta Raiz
 app.get('/', (request, response) => {
