@@ -4,7 +4,7 @@ import { updateWeatherData, fetchWeeklyWeather } from '../../controllers/index.j
 
 const router = express.Router()
 
-// GET /:plotId
+// GET /get-weather/:plotId
 router.get('/get-weather/:plotId', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id
@@ -25,7 +25,7 @@ router.get('/get-weather/:plotId', autenticate, async (request, response, next) 
   }
 })
 
-// GET /weather/weekly/:plotId
+// GET /get-weekly/:plotId
 router.get('/get-weekly/:plotId', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id
