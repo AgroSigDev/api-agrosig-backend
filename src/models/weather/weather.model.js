@@ -40,16 +40,10 @@ async function getWeatherData (latitude, longitude) {
 
 async function saveOrUpdateWeatherData (userId, plotId, weatherData) {
   try {
-    // 1. Verificar la ubicación de la parcela
-    const location = await findUbication(userId, plotId)
-    if (!location) {
-      throw new Error('Location not found for this user and plot')
-    }
-
-    // 2. Obtener la fecha actual YYYY-MM-DD
+    // 1. Obtener la fecha actual YYYY-MM-DD
     const today = new Date().toISOString().split('T')[0]
 
-    // 3. UPSERT
+    // 2. UPSERT
     const query = {
       text: `
         INSERT INTO plot_climate
