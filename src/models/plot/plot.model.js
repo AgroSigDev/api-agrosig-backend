@@ -65,20 +65,6 @@ async function createPlot (userId, plot) {
   }
 }
 
-async function findUserPlotUser (userId) {
-  try {
-    const query = {
-      text: 'SELECT plot_id FROM plots WHERE user_id = $1 ORDER BY created_At DESC LIMIT 1',
-      values: [userId]
-    }
-    const result = await pool.query(query)
-    return result.rows[0]
-  } catch (error) {
-    console.error('Error finding user plot:', error)
-    throw error
-  }
-}
-
 /**
  * Retrieves plot information associated with a specific user ID.
  *
@@ -209,6 +195,21 @@ async function updatePlotById (userId, plotId, plotData) {
   }
 }
 
+/**
+ * Soft deletes a plot by its ID for a specific user.
+ *
+ * This function checks if the plot exists and if it belongs to the given user.
+ * If both conditions are met, it performs a soft delete operation on the plot.
+ *
+ * @async
+ * @function detelePlotById
+ * @param {number|string} userId - The ID of the user attempting to delete the plot.
+ * @param {number|string} plotId - The ID of the plot to be deleted.
+ * @throws {Error} If the plot is not found or the user does not own the plot.
+ * @throws {Error} If there is an error during the deletion process.
+ * @returns {Promise<void>} Resolves when the plot is successfully soft deleted.
+ */
+
 async function detelePlotById (userId, plotId) {
   try {
     const existingPlot = await getPlotbyId(plotId)
@@ -233,7 +234,6 @@ async function detelePlotById (userId, plotId) {
 
 export const Plot = {
   createPlot,
-  findUserPlotUser,
   getPlotByUserId,
   getPlotbyId,
   getAllPlots,
