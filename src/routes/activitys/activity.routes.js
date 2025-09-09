@@ -13,7 +13,7 @@ router.post('/register/:cropId', autenticate, async (request, response, next) =>
 
     const activityData = {
       activity_type: activityType,
-      date,
+      date: date || new Date(),
       description
     }
 
@@ -22,10 +22,11 @@ router.post('/register/:cropId', autenticate, async (request, response, next) =>
     if (inputs) {
       mappedInputs = inputs.map(input => {
         return {
-          input_name: input.input_name,
-          unit: input.unit,
-          quantity: input.quantity,
-          unit_cost: input.unit_cost
+          input_name: input.input_name?.trim(),
+          unit: input.unit?.trim() || 'unit',
+          quantity: parseFloat(input.quantity) || 0,
+          unit_cost: parseFloat(input.unit_cost) || 0,
+          cost_unit: input.cost_unit?.trim() || input.unit?.trim() || 'unit'
         }
       })
     }
