@@ -43,7 +43,7 @@ export const swaggerDefinition = {
 }
 
 // Cargar el archivo YAML con la documentación
-const swaggerDocument = YAML.load(resolve(__dirname, './src/docs/index.yaml'))
+const swaggerDocument = YAML.load(resolve(__dirname, 'src/docs/index.yaml'))
 
 // Configuración del tema
 const theme = new SwaggerTheme()
