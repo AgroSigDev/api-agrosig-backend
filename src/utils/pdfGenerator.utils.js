@@ -12,8 +12,9 @@ async function generatePDFReport (cropData, filePath) {
       // Header
       doc
         .fontSize(20)
+        .font('Helvetica-Bold')
         .text('Reporte de Cultivo', { align: 'center', fontSize: 20 })
-        .moveDown()
+        .moveDown(0.5)
 
       // Datos del Cultivo
       doc.fontSize(12).text(`Cultivo: ${cropData.crop_type}`, { continued: true })
