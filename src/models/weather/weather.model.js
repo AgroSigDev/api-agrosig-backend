@@ -2,6 +2,17 @@ import { pool } from '../../lib/db.js'
 import { config } from '../../../config.js'
 import axios from 'axios'
 
+/**
+ * Retrieves the location and coordinates of a specific plot for a given user.
+ *
+ * @async
+ * @function findUbication
+ * @param {number|string} userId - The ID of the user.
+ * @param {number|string} plotId - The ID of the plot.
+ * @returns {Promise<Object>} Resolves with an object containing plot_id, location, latitude, and longitude.
+ * @throws Will throw an error if the database query fails.
+ */
+
 async function findUbication (userId, plotId) {
   try {
     const query = {
@@ -15,6 +26,27 @@ async function findUbication (userId, plotId) {
     throw error
   }
 }
+
+/**
+ * Fetches current weather data for a given latitude and longitude using the OpenWeatherMap API.
+ *
+ * @async
+ * @function getWeatherData
+ * @param {number} latitude - The latitude of the location.
+ * @param {number} longitude - The longitude of the location.
+ * @returns {Promise<Object>} An object containing weather information:
+ * @returns {number} temperature - Current temperature in Celsius.
+ * @returns {number} humidity - Current humidity percentage.
+ * @returns {string} description - Weather description in Spanish.
+ * @returns {number} precipitation - Precipitation in mm for the last hour (if available).
+ * @returns {number} wind_speed - Wind speed in m/s.
+ * @returns {number} atmosphere_pressure - Atmospheric pressure in hPa.
+ * @returns {number} wind_direction - Wind direction in degrees.
+ * @returns {number} min_temp - Minimum temperature in Celsius.
+ * @returns {number} max_temp - Maximum temperature in Celsius.
+ * @returns {string} city_name - Name of the city.
+ * @throws Will throw an error if the weather data cannot be fetched.
+ */
 
 async function getWeatherData (latitude, longitude) {
   try {
@@ -37,6 +69,28 @@ async function getWeatherData (latitude, longitude) {
     throw error
   }
 }
+
+/**
+ * Saves or updates weather data for a specific plot and user.
+ * Performs an UPSERT operation on the plot_climate table based on plot_id and date.
+ *
+ * @async
+ * @param {number|string} userId - The ID of the user associated with the plot.
+ * @param {number|string} plotId - The ID of the plot for which weather data is saved.
+ * @param {Object} weatherData - The weather data to save or update.
+ * @param {number} weatherData.temperature - Temperature value.
+ * @param {number} weatherData.humidity - Humidity value.
+ * @param {string} weatherData.description - Weather description.
+ * @param {number} weatherData.precipitation - Precipitation amount.
+ * @param {number} weatherData.wind_speed - Wind speed.
+ * @param {number} weatherData.atmosphere_pressure - Atmospheric pressure.
+ * @param {string} weatherData.wind_direction - Wind direction.
+ * @param {number} weatherData.min_temp - Minimum temperature.
+ * @param {number} weatherData.max_temp - Maximum temperature.
+ * @param {string} weatherData.city_name - City name.
+ * @returns {Promise<Object>} An object indicating success and the climate record ID.
+ * @throws {Error} Throws an error if the database operation fails.
+ */
 
 async function saveOrUpdateWeatherData (userId, plotId, weatherData) {
   try {
@@ -88,6 +142,18 @@ async function saveOrUpdateWeatherData (userId, plotId, weatherData) {
     throw error
   }
 }
+
+/**
+ * Fetches weekly weather forecast for a given latitude and longitude using the OpenWeatherMap API.
+ * Processes the forecast data to aggregate daily weather information for the next 7 days.
+ *
+ * @async
+ * @param {number} latitude - The latitude of the location.
+ * @param {number} longitude - The longitude of the location.
+ * @returns {Promise<Array<Object>>} An array of daily weather forecast objects for the next 7 days.
+ * Each object contains date_at, temperature, humidity, description, precipitation, wind_speed, min_temperature, max_temperature.
+ * @throws {Error} Throws an error if the weather data cannot be fetched.
+ */
 
 async function fetchWeeklyWeather (latitude, longitude) {
   try {

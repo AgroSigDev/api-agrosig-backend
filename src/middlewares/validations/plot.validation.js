@@ -37,6 +37,19 @@ async function validateLocationPlot (location) {
   }
 }
 
+/**
+
+Validates the latitude and longitude coordinates for a plot.
+Ensures that latitude is between -90 and 90 degrees, longitude is between -180 and 180 degrees,
+and both are valid numeric values.
+@async
+@param {number|string} latitude - The latitude value to validate (must be convertible to a number).
+@param {number|string} longitude - The longitude value to validate (must be convertible to a number).
+@returns {boolean} True if both coordinates are valid numbers within the specified ranges.
+@throws {Error} Throws 'Invalid latitude' if latitude is outside the range -90 to 90.
+@throws {Error} Throws 'Invalid longitude' if longitude is outside the range -180 to 180.
+*/
+
 async function validCoordinates (latitude, longitude) {
   const lat = parseFloat(latitude)
   const lon = parseFloat(longitude)
