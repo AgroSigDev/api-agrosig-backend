@@ -40,6 +40,15 @@ async function validateFieldsLogin (user) {
   }
 }
 
+/**
+
+Validates that the provided password string has a minimum length of 8 characters.
+Throws an error if the password is too short.
+@async
+@param {string} password - The password string to validate.
+@throws {Error} If the password is less than 8 characters long.
+*/
+
 async function vaidateStringLength (password) {
   if (password.length < 8) {
     throw new Error('Password must be at least 8 characters long')
