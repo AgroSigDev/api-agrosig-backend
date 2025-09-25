@@ -88,6 +88,15 @@ async function getPlotByUserId (userId) {
   }
 }
 
+/**
+ * Retrieves a plot from the database by its ID.
+ *
+ * @async
+ * @param {number|string} plotId - The ID of the plot to retrieve.
+ * @returns {Promise<Object|undefined>} A promise that resolves to the plot object if found, or undefined if not found.
+ * @throws {Error} If there is an error during the database query.
+ */
+
 async function getPlotbyId (plotId) {
   try {
     const query = {
@@ -148,6 +157,23 @@ async function getUbicationCoords (userId) {
     throw error
   }
 }
+
+/**
+ * Updates a plot by its ID for a specific user after validating the input data.
+ * Ensures the plot exists and belongs to the user, validates fields, and updates the plot in the database.
+ *
+ * @async
+ * @param {number|string} userId - The ID of the user updating the plot.
+ * @param {number|string} plotId - The ID of the plot to update.
+ * @param {Object} plotData - The updated plot data.
+ * @param {string} plotData.plot_name - The new name of the plot.
+ * @param {string} plotData.location - The new location of the plot in "lat,long" format.
+ * @param {number} plotData.area - The new area of the plot.
+ * @param {number|string} [plotData.lat] - The latitude (optional if location is provided).
+ * @param {number|string} [plotData.long] - The longitude (optional if location is provided).
+ * @returns {Promise<Object>} The updated plot object.
+ * @throws {Error} If validation fails, plot not found, user does not own the plot, or database error occurs.
+ */
 
 async function updatePlotById (userId, plotId, plotData) {
   try {
