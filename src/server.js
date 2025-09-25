@@ -6,9 +6,11 @@ import { config } from '../config.js'
 import userRouter from './routes/users/users.routes.js'
 import authRouter from './routes/auth/auth.routes.js'
 import plotRouter from './routes/plots/plots.routes.js'
-import weatherPlot from './routes/weather/weather.routes.js'
+import weatherPlotRouter from './routes/weather/weather.routes.js'
 import cropRouter from './routes/crop/crop.routes.js'
+import activityRouter from './routes/activitys/activity.routes.js'
 import reportRouter from './routes/report/report.routes.js'
+
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -34,8 +36,9 @@ app.use('/images', express.static(path.join(__dirname, 'src/uploads/profile')))
 app.use('/users', userRouter)
 app.use('/auth', authRouter)
 app.use('/plots', plotRouter)
-app.use('/weather', weatherPlot)
+app.use('/weather', weatherPlotRouter)
 app.use('/crop', cropRouter)
+app.use('/activity', activityRouter)
 app.use('/report', reportRouter)
 
 // Ruta Raiz

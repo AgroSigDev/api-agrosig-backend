@@ -5,6 +5,16 @@ import {
   comparePasswords
 } from '../../middlewares/index.js'
 
+/**
+ * Retrieves a user from the database by their user ID.
+ *
+ * @async
+ * @function getUserById
+ * @param {number|string} userId - The unique identifier of the user to retrieve.
+ * @returns {Promise<Object|null>} Resolves with the user object if found, or null if not found.
+ * @throws {Error} Throws an error if the database query fails.
+ */
+
 async function getUserById (userId) {
   try {
     const query = {
@@ -18,6 +28,15 @@ async function getUserById (userId) {
     throw error
   }
 }
+
+/**
+ * Retrieves all users from the database.
+ *
+ * @async
+ * @function getAllUsers
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of user objects.
+ * @throws {Error} Throws an error if the database query fails.
+ */
 
 async function getAllUsers () {
   try {
@@ -33,6 +52,21 @@ async function getAllUsers () {
 }
 
 // crear la funcion para actuaizar el usuario por id
+/**
+ * Updates a user's information by their user ID.
+ *
+ * @async
+ * @function
+ * @param {number|string} userId - The unique identifier of the user to update.
+ * @param {Object} userData - An object containing the user's updated data.
+ * @param {string} userData.first_name - The user's updated first name.
+ * @param {string} userData.paternal_surname - The user's updated paternal surname.
+ * @param {string} userData.maternal_surname - The user's updated maternal surname.
+ * @param {string} userData.email - The user's updated email address.
+ * @returns {Promise<Object>} The updated user object.
+ * @throws {Error} If the user is not found or the email already exists.
+ */
+
 async function updateUserById (userId, userData) {
   try {
     const existingUser = await getUserById(userId)
@@ -59,6 +93,20 @@ async function updateUserById (userId, userData) {
 }
 
 // crear la funcion para actuaizar la contraseña del usuario por id
+/**
+ * Updates a user's password after validating the old password, ensuring the new password is different,
+ * and confirming the new password matches the repeated password. Throws errors for invalid input or failed validation.
+ *
+ * @async
+ * @function updateUserPassword
+ * @param {string|number} userId - The ID of the user whose password is to be updated.
+ * @param {string} oldPassword - The user's current password.
+ * @param {string} newPassword - The new password to set.
+ * @param {string} repeatedPassword - The repeated new password for confirmation.
+ * @returns {Promise<Object>} The updated user object.
+ * @throws {Error} If any validation fails or the update operation encounters an error.
+ */
+
 async function updateUserPassword (userId, oldPassword, newPassword, repeatedPassword) {
   try {
     if (!oldPassword || !newPassword || !repeatedPassword) {
@@ -102,6 +150,17 @@ async function updateUserPassword (userId, oldPassword, newPassword, repeatedPas
   }
 }
 
+/**
+ * Updates the image path of a user by their ID.
+ *
+ * @async
+ * @function updateImageUserById
+ * @param {string|number} userId - The unique identifier of the user.
+ * @param {string} nweImagePath - The new image path to set for the user.
+ * @returns {Promise<{user: Object, oldImagePath: string|null}>} An object containing the updated user and the previous image path.
+ * @throws {Error} If the user is not found or if there is a database error.
+ */
+
 async function updateImageUserById (userId, nweImagePath) {
   try {
     const existingUser = await getUserById(userId)
@@ -124,6 +183,16 @@ async function updateImageUserById (userId, nweImagePath) {
   }
 }
 
+/**
+ * Retrieves a user from the database by their email address.
+ *
+ * @async
+ * @function getUserByEmail
+ * @param {string} email - The email address of the user to retrieve.
+ * @returns {Promise<Object|null>} Resolves with the user object if found, or null if not found.
+ * @throws {Error} If there is an error during the database query.
+ */
+
 async function getUserByEmail (email) {
   try {
     const query = {
@@ -137,6 +206,16 @@ async function getUserByEmail (email) {
     throw error
   }
 }
+
+/**
+ * Deletes a user from the database by their user ID.
+ *
+ * @async
+ * @function deleteUserById
+ * @param {number|string} userId - The unique identifier of the user to delete.
+ * @throws {Error} If the user is not found or if a database error occurs.
+ * @returns {Promise<void>} Resolves when the user is successfully deleted.
+ */
 
 async function deleteUserById (userId) {
   try {
