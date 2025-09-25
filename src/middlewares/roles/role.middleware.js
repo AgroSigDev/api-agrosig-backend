@@ -1,4 +1,4 @@
-import { UsersRoles } from '../../models/index.js'
+import { Role } from '../../models/index.js'
 
 /**
  * Middleware to authorize users based on their roles.
@@ -24,7 +24,7 @@ export const authorize = (allowedRoles) => {
         })
       }
 
-      const userWithRole = await UsersRoles.getUserByIdRole(request.user.user_id)
+      const userWithRole = await Role.getUserByIdRole(request.user.user_id)
 
       if (!userWithRole) {
         return response.status(401).json({
@@ -33,7 +33,7 @@ export const authorize = (allowedRoles) => {
         })
       }
 
-      const role = await UsersRoles.getRoleBYId(userWithRole.role_id)
+      const role = await Role.getRoleBYId(userWithRole.role_id)
 
       if (!role) {
         return response.status(401).json({
