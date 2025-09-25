@@ -8,6 +8,7 @@ import authRouter from './routes/auth/auth.routes.js'
 import plotRouter from './routes/plots/plots.routes.js'
 import weatherPlot from './routes/weather/weather.routes.js'
 import cropRouter from './routes/crop/crop.routes.js'
+import reportRouter from './routes/report/report.routes.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -35,6 +36,7 @@ app.use('/auth', authRouter)
 app.use('/plots', plotRouter)
 app.use('/weather', weatherPlot)
 app.use('/crop', cropRouter)
+app.use('/report', reportRouter)
 
 // Ruta Raiz
 app.get('/', (request, response) => {
