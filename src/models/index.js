@@ -4,7 +4,7 @@ import { Role } from './roles/rol.model.js'
 import { Plot } from './plot/plot.model.js'
 import { Weather } from './weather/weather.model.js'
 import { Crop } from './crop/crop.model.js'
-import { Report } from './report/report.model.js'
 import { Activitys } from './activitys/activitys.model.js'
+import { Report } from './report/report.model.js'
 
 export { Users, Auth, Role, Plot, Weather, Crop, Activitys, Report }
