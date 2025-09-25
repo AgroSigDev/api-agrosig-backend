@@ -9,6 +9,7 @@ import plotRouter from './routes/plots/plots.routes.js'
 import weatherPlotRouter from './routes/weather/weather.routes.js'
 import cropRouter from './routes/crop/crop.routes.js'
 import activityRouter from './routes/activitys/activity.routes.js'
+import reportRouter from './routes/report/report.routes.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -37,6 +38,7 @@ app.use('/plots', plotRouter)
 app.use('/weather', weatherPlotRouter)
 app.use('/crop', cropRouter)
 app.use('/activity', activityRouter)
+app.use('/report', reportRouter)
 
 // Ruta Raiz
 app.get('/', (request, response) => {
