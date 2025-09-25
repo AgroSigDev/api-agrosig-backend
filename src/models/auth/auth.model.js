@@ -77,6 +77,20 @@ async function registerUser (user) {
   }
 }
 
+/**
+ * Authenticates a user by validating login fields, checking user existence,
+ * verifying account status, and comparing passwords.
+ * Generates and returns authentication and refresh tokens upon successful login.
+ *
+ * @async
+ * @param {Object} user - The user login data.
+ * @param {string} user.email - The user's email address.
+ * @param {string} user.password - The user's password.
+ * @returns {Promise<Object>} An object containing the authentication token and refresh token.
+ * @throws {Error} Throws errors for missing fields, user not found, linked Google account,
+ * inactive user, or invalid password.
+ */
+
 async function loginUser (user) {
   await validateFieldsLogin(user)
 
