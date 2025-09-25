@@ -1,6 +1,25 @@
 import { pool } from '../../lib/db.js'
 import { validFieldsRegisterCrop } from '../../middlewares/index.js'
 
+/**
+ * Creates a new crop record for a user and plot.
+ *
+ * Validates crop fields and ensures the plot belongs to the user. If no plotId is provided,
+ * assigns the user's default active plot. Throws an error if validation fails.
+ *
+ * @async
+ * @function
+ * @param {number} userId - The ID of the user creating the crop.
+ * @param {number|null} plotId - The ID of the plot to associate with the crop. If null, uses the user's default plot.
+ * @param {Object} crop - The crop data to register.
+ * @param {string} crop.crop_type - The type of the crop.
+ * @param {string} crop.crop_variety - The variety of the crop.
+ * @param {string|Date} crop.planting_date - The planting date of the crop.
+ * @param {string|Date} crop.harvest_date - The expected harvest date of the crop.
+ * @returns {Promise<Object>} The newly created crop record.
+ * @throws {Error} If validation fails or the plot does not belong to the user.
+ */
+
 async function createCrop (userId, plotId, crop) {
   try {
     await validFieldsRegisterCrop(crop)
@@ -41,6 +60,27 @@ async function createCrop (userId, plotId, crop) {
   }
 }
 
+/**
+ * Updates a crop record for a specific user by crop ID.
+ *
+ * Validates the input crop data, ensures the crop exists and belongs to the user,
+ * and checks that the specified plot (if provided) also belongs to the user.
+ * Updates the crop record in the database and returns the updated crop.
+ *
+ * @async
+ * @function
+ * @param {number|string} userId - The ID of the user who owns the crop.
+ * @param {number|string} cropId - The ID of the crop to update.
+ * @param {Object} cropData - The data to update for the crop.
+ * @param {string} [cropData.crop_type] - The type of the crop.
+ * @param {string} [cropData.crop_variety] - The variety of the crop.
+ * @param {string|Date} [cropData.planting_date] - The planting date of the crop.
+ * @param {string|Date} [cropData.harvest_date] - The harvest date of the crop.
+ * @param {number|string} [cropData.plot_id] - The ID of the plot associated with the crop.
+ * @returns {Promise<Object>} The updated crop record.
+ * @throws {Error} If validation fails, the crop does not exist, or does not belong to the user.
+ */
+
 async function updateCropByUserId (userId, cropId, cropData) {
   try {
     await validFieldsRegisterCrop(cropData)
@@ -80,6 +120,16 @@ async function updateCropByUserId (userId, cropId, cropData) {
   }
 }
 
+/**
+ * Retrieves a crop record from the database by its ID.
+ *
+ * @async
+ * @function getCropById
+ * @param {number|string} cropId - The unique identifier of the crop to retrieve.
+ * @returns {Promise<Object|null>} Resolves with the crop object if found, or null if not found.
+ * @throws {Error} Throws an error if the database query fails.
+ */
+
 async function getCropById (cropId) {
   try {
     const query = {
@@ -93,6 +143,18 @@ async function getCropById (cropId) {
     throw error
   }
 }
+
+/**
+ * Retrieves a paginated list of crops for a specific user, including plot names and total count.
+ *
+ * @async
+ * @function getCropsByUserId
+ * @param {number|string} userId - The ID of the user whose crops are to be retrieved.
+ * @param {number} [page=1] - The page number for pagination.
+ * @param {number} [limit=10] - The number of crops to retrieve per page.
+ * @returns {Promise<Array<Object>>} Resolves to an array of crop objects with plot information and total count.
+ * @throws Will throw an error if the database query fails.
+ */
 
 async function getCropsByUserId (userId, page = 1, limit = 10) {
   try {
@@ -110,6 +172,16 @@ async function getCropsByUserId (userId, page = 1, limit = 10) {
   }
 }
 
+/**
+ * Retrieves the total number of active crops for a given user ID.
+ *
+ * @async
+ * @function getTotalCropsByUserId
+ * @param {number|string} userId - The ID of the user whose crops are to be counted.
+ * @returns {Promise<number>} The total count of active crops for the specified user.
+ * @throws Will throw an error if the database query fails.
+ */
+
 async function getTotalCropsByUserId (userId) {
   try {
     const query = {
@@ -123,6 +195,18 @@ async function getTotalCropsByUserId (userId) {
     throw error
   }
 }
+
+/**
+ * Deletes (deactivates) a crop for a specific user by setting its `is_active` property to false.
+ * Validates that the crop exists, belongs to the user, and is currently active before deactivation.
+ *
+ * @async
+ * @function deleteCropByUserId
+ * @param {number|string} userId - The ID of the user who owns the crop.
+ * @param {number|string} cropId - The ID of the crop to be deleted.
+ * @throws {Error} If the crop does not exist, does not belong to the user, or is not active.
+ * @returns {Promise<void>} Resolves when the crop is successfully deactivated.
+ */
 
 async function deleteCropByUserId (userId, cropId) {
   try {
@@ -149,6 +233,17 @@ async function deleteCropByUserId (userId, cropId) {
   }
 }
 
+/**
+ * Retrieves a crop record by its ID and associated user ID, ensuring the crop is active.
+ *
+ * @async
+ * @function getCropByIdAndUserId
+ * @param {number|string} cropId - The unique identifier of the crop.
+ * @param {number|string} userId - The unique identifier of the user.
+ * @returns {Promise<Object|null>} The crop record if found, or null if not found.
+ * @throws {Error} If there is an error during the database query.
+ */
+
 async function getCropByIdAndUserId (cropId, userId) {
   try {
     const query = {
@@ -163,6 +258,17 @@ async function getCropByIdAndUserId (cropId, userId) {
   }
 }
 
+/**
+ * Retrieves the default active plot for a given user by their user ID.
+ * The default plot is determined as the first active plot (ordered by plot_id).
+ *
+ * @async
+ * @function getDefaultPlotByUserId
+ * @param {number|string} userId - The ID of the user whose default plot is to be retrieved.
+ * @returns {Promise<Object|null>} The first active plot object for the user, or null if none found.
+ * @throws {Error} If there is an error during database query execution.
+ */
+
 async function getDefaultPlotByUserId (userId) {
   try {
     const query = {
@@ -176,6 +282,17 @@ async function getDefaultPlotByUserId (userId) {
     throw error
   }
 }
+
+/**
+ * Validates if a given plot belongs to a user and is active.
+ *
+ * @async
+ * @function validateUserPlot
+ * @param {number|string} userId - The ID of the user.
+ * @param {number|string} plotId - The ID of the plot to validate.
+ * @returns {Promise<Object|undefined>} Resolves with the plot row if valid, otherwise undefined.
+ * @throws Will throw an error if the database query fails.
+ */
 
 async function validateUserPlot (userId, plotId) {
   try {

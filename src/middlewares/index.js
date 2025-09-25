@@ -1,3 +1,7 @@
 export * from './validations/hash.middleware.js'
 export * from './validations/validation.middleware.js'
+export * from './validations/plot.validation.js'
+export * from './validations/crop.validation.js'
+export * from './validations/activity.validation.js'
 export * from './auth/auth.middleware.js'
+export * from './roles/role.middleware.js'

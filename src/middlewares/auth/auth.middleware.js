@@ -1,5 +1,6 @@
 import { verifyToken, verifyRefresToken } from '../../helpers/jwt.helper.js'
 import { generateAuthToken } from '../../utils/token.utils.js'
+
 /**
  * Middleware to verify JWT token from the Authorization header.
  *
@@ -13,6 +14,7 @@ import { generateAuthToken } from '../../utils/token.utils.js'
  * @param {import('express').NextFunction} next - Express next middleware function.
  * @returns {void}
  */
+
 export const autenticate = (request, response, next) => {
   if (!request.headers.authorization && !request.headers['x-refresh-token']) {
     return response.status(403).json({
