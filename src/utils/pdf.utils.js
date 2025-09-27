@@ -1,4 +1,3 @@
-// utils/pdf.utils.js
 import PDFDocument from 'pdfkit'
 
 function formatDate (date) {
