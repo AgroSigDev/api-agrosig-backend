@@ -16,7 +16,7 @@ import axios from 'axios'
 async function findUbication (userId, plotId) {
   try {
     const query = {
-      text: 'SELECT plot_id, location, ST_X(geom) as latitude, ST_Y(geom) as longitude FROM plots WHERE user_id = $1 AND plot_id = $2',
+      text: 'SELECT plot_id, location, ST_X(geom) as longitude, ST_Y(geom) as latitude FROM plots WHERE user_id = $1 AND plot_id = $2 AND is_active = true',
       values: [userId, plotId]
     }
     const result = await pool.query(query)

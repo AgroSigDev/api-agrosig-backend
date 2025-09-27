@@ -5,6 +5,37 @@ import {
   validateArea
 } from '../../middlewares/index.js'
 
+function extractAndValidateCoordinates (plotData) {
+  let lat, long
+
+  // Prioridad 1: Campos lat y long separados
+  if (plotData.lat !== undefined && plotData.long !== undefined) {
+    lat = parseFloat(plotData.lat)
+    long = parseFloat(plotData.long)
+  } else if (plotData.location && plotData.location.includes(',')) {
+    const coords = plotData.location.split(',').map(coord => coord.trim())
+    if (coords.length === 2) {
+      lat = parseFloat(coords[0])
+      long = parseFloat(coords[1])
+    }
+  }
+
+  // Validar que se obtuvieron coordenadas válidas
+  if (lat === undefined || long === undefined || isNaN(lat) || isNaN(long)) {
+    throw new Error('Valid coordinates are required. Use either "lat" and "long" fields or "lat,long" format in location')
+  }
+
+  // Validar rangos
+  if (lat < -90 || lat > 90) {
+    throw new Error(`Invalid latitude: ${lat}. Must be between -90 and 90.`)
+  }
+  if (long < -180 || long > 180) {
+    throw new Error(`Invalid longitude: ${long}. Must be between -180 and 180.`)
+  }
+
+  return { lat, long }
+}
+
 /**
  * Creates a new plot for a user after validating the input fields.
  *
@@ -29,6 +60,7 @@ async function createPlot (userId, plot) {
     if (existingUserPlot) {
       throw new Error('User already has a plot')
     }
+
     await validateLocationPlot(plot.location)
     await validateArea(plot.area)
 
@@ -36,15 +68,7 @@ async function createPlot (userId, plot) {
       throw new Error('Latitude and Longitude are required')
     }
 
-    let lat, long
-    if (plot.lat && plot.long) {
-      lat = plot.lat
-      long = plot.long
-    } else if (plot.location && plot.location.includes(',')) {
-      [lat, long] = plot.location.split(',').map(coord => coord.trim())
-    } else {
-      throw new Error('Latitude and Longitude are required in format "lat,long"')
-    }
+    const { lat, long } = extractAndValidateCoordinates(plot)
 
     const registerQuery = {
       text: 'CALL register_user_plot($1, $2, $3, $4, $5)',
@@ -191,29 +215,30 @@ async function updatePlotById (userId, plotId, plotData) {
       throw new Error('User does not own this plot')
     }
 
-    let lat, long
-    if (plotData.lat && plotData.long) {
-      lat = plotData.lat
-      long = plotData.long
-    } else if (plotData.location && plotData.location.includes(',')) {
-      [lat, long] = plotData.location.split(',').map(coord => coord.trim())
-    } else {
-      throw new Error('Latitude and Longitude are required in format "lat,long"')
-    }
+    const { lat, long } = extractAndValidateCoordinates(plotData)
 
-    const query = {
-      text: 'UPDATE plots SET plot_name = $1, location = $2, area = $3, geom = ST_SetSRID(ST_MakePoint($4, $5), 4326) WHERE plot_id = $6 AND user_id = $7 RETURNING *',
+    const updateQuery = {
+      text: 'CALL update_user_plot($1, $2, $3, $4, $5, $6)',
       values: [
+        userId,
+        plotId,
         plotData.plot_name,
         plotData.location,
         plotData.area,
-        lat,
-        long,
-        plotId,
-        userId
+        `${lat},${long}`
       ]
     }
-    const result = await pool.query(query)
+
+    await pool.query(updateQuery)
+
+    const selectQuery = {
+      text: `SELECT plot_id, user_id, plot_name, location, area, 
+                    ST_X(geom) as longitude, ST_Y(geom) as latitude,
+                    geom, is_active, created_at
+             FROM plots WHERE plot_id = $1`,
+      values: [plotId]
+    }
+    const result = await pool.query(selectQuery)
     return result.rows[0]
   } catch (error) {
     console.error('Error updating plot by ID:', error)

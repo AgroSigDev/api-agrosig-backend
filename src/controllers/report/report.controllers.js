@@ -22,6 +22,7 @@ async function getReportPDF (request, response, next) {
   try {
     const cropId = request.params.cropId
     const userId = request.user.user_id
+    console.log('Generando PDF para cropId:', cropId, 'userId:', userId)
 
     if (!cropId) {
       return response.status(400).json({ error: 'ID de cultivo es requerido' })
