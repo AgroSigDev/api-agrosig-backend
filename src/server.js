@@ -10,7 +10,7 @@ import weatherPlotRouter from './routes/weather/weather.routes.js'
 import cropRouter from './routes/crop/crop.routes.js'
 import activityRouter from './routes/activitys/activity.routes.js'
 import reportRouter from './routes/report/report.routes.js'
-import productionRouter from './routes/production_batch/production_batch.routers.js'
+import productionRouter from './routes/production_batch/production_batch.routes.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -40,7 +40,7 @@ app.use('/weather', weatherPlotRouter)
 app.use('/crop', cropRouter)
 app.use('/activity', activityRouter)
 app.use('/report', reportRouter)
-app.use('/production-batch', productionRouter)
+app.use('/production', productionRouter)
 
 // Ruta Raiz
 app.get('/', (request, response) => {
