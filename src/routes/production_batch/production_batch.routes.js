@@ -1,10 +1,10 @@
 import express from 'express'
-import { createProductionBatch, getProductionBatches, getProductionDetail } from '../../controllers/index.js'
+import { createProductionBatch, getProductionBatches, getProductionDetail, associateActivities, getAvaliableActivities, getBatchActivities } from '../../controllers/index.js'
 import { autenticate } from '../../middlewares/index.js'
 
 const router = express.Router()
 
-// POST /production-batch
+// POST /production
 router.post('/register/:cropId', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id
@@ -27,7 +27,7 @@ router.post('/register/:cropId', autenticate, async (request, response, next) =>
   }
 })
 
-// GET /productions_batches
+// GET /productions
 router.get('/productions', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id
@@ -49,7 +49,7 @@ router.get('/productions', autenticate, async (request, response, next) => {
   }
 })
 
-// GET /production_batches/:id
+// GET /production/:id
 router.get('/production/:id', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id
@@ -70,4 +70,70 @@ router.get('/production/:id', autenticate, async (request, response, next) => {
     })
   }
 })
+
+// POST /production/associate-activities
+router.post('/associate-activities/:productionId', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.user.user_id
+    const productionId = request.params.productionId
+    const activityIds = request.body.activityIds || request.body.activity_ids
+
+    const result = await associateActivities(userId, productionId, activityIds)
+    response.status(200).json({
+      success: true,
+      message: 'Activities associated successfully',
+      data: result
+    })
+  } catch (error) {
+    console.log('Error associating activities: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error associating activities',
+      error: error.message
+    })
+  }
+})
+
+// GET /production/available-activities/:productionId
+router.get('/available-activities/:productionId', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.user.user_id
+    const productionId = request.params.productionId
+
+    const result = await getAvaliableActivities(userId, productionId)
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    console.log('Error getting available activities: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error getting available activities',
+      error: error.message
+    })
+  }
+})
+
+// GET /production/activities/:productionId
+router.get('/activities/:productionId', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.user.user_id
+    const productionId = request.params.productionId
+
+    const result = await getBatchActivities(userId, productionId)
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    console.log('Error getting batch activities: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error getting batch activities',
+      error: error.message
+    })
+  }
+})
+
 export default router
