@@ -21,6 +21,7 @@ dotenv.config({ path: '.env' })
 
 export const config = {
   port: process.env.PORT || 4000,
+  appUrl: process.env.APP_URL,
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,

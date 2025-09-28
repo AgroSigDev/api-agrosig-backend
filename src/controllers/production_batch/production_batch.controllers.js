@@ -28,7 +28,7 @@ async function getProductionBatches (userId, page = 1, limit = 10) {
       per_page: parseInt(limit),
       total: totalBatches,
       total_pages: Math.ceil(totalBatches / limit),
-      has_next: page < Math.ceil(totalBatches / limit), // ← Corregir "hash_next"
+      has_next: page < Math.ceil(totalBatches / limit),
       has_prev: page > 1
     }
   }
@@ -39,8 +39,26 @@ async function getProductionDetail (userId, productionId) {
   return batchDetail
 }
 
+async function associateActivities (userId, productionId, activityIds) {
+  const data = await productionBatch.associateActivitiesToBatch(userId, productionId, activityIds)
+  return data
+}
+
+async function getAvaliableActivities (userId, productionId) {
+  const data = await productionBatch.getAvaliableActivitiesForBatch(userId, productionId)
+  return data
+}
+
+async function getBatchActivities (userId, productionId) {
+  const data = await productionBatch.getBatchActivities(userId, productionId)
+  return data
+}
+
 export {
   createProductionBatch,
   getProductionBatches,
-  getProductionDetail
+  getProductionDetail,
+  associateActivities,
+  getAvaliableActivities,
+  getBatchActivities
 }
