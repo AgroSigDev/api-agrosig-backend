@@ -2,13 +2,13 @@ import express from 'express'
 import path from 'path'
 import fs from 'fs'
 import { getAllUsers, getUserById, updateUserById, updateUserPassword, updateImageUserById, deleteUserById } from '../../controllers/index.js'
-import { autenticate } from '../../middlewares/index.js'
+import { autenticate, authorize } from '../../middlewares/index.js'
 import { uploadProfile } from '../../helpers/index.js'
 
 const router = express.Router()
 
 // GET /users/:id
-router.get('/:id', autenticate, async (request, response, next) => {
+router.get('/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   try {
     const userId = request.params.id
     const result = await getUserById(userId)
