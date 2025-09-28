@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 function generateUniqueBatchCode () {
   const timestamp = Date.now()
   const uniqueId = uuidv4().substring(0, 8).toUpperCase()
-  return 'BATCH-${timestamp}-${uniqueId}'
+  return `BATCH-${timestamp}-${uniqueId}`
 }
 
 async function generateQRCodeDataURL (url) {
