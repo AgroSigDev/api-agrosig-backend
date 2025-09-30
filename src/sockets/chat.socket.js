@@ -1,6 +1,7 @@
 import { socketAuthMiddleware } from '../middlewares/index.js'
 import { makeRateLimiter } from '../helpers/index.js'
 import { createComment, updateComment, deleteComment } from '../controllers/index.js'
+import { NotificationService } from '../services/notifications.services.js'
 
 const allowMessage = makeRateLimiter(10, 10_000)
 
@@ -12,25 +13,34 @@ export function setupChatNameSpace (io) {
   nameSpace.on('connection', (socket) => {
     console.log(`chat: connection ${socket.id} user:${socket.user?.user_id}`)
 
+    // Unir al usuario a su room personal para notificaciones
+    socket.join(`user_${socket.user.user_id}`)
+
     // Creating comment
     socket.on('comment:create', async (payload, ack) => {
       try {
         if (!allowMessage(socket)) return ack?.({ ok: false, error: 'rate_limited' })
 
-        const { message } = payload || {}
+        const { message, parentCommentId } = payload || {}
         if (!message || typeof message !== 'string') return ack?.({ ok: false, error: 'invalid_payload' })
 
-        // controller toma userId del socket
         const created = await createComment(socket.user.user_id, message)
 
         // Emitir el nuevo comentario a todos en /chat
         nameSpace.emit('comment:new', created)
 
-        // ACK al emisor
+        // Crear notificación
+        if (parentCommentId) {
+          // Es una respuesta, notificar al autor del comentario padre
+          await NotificationService.notifyCommentReply(created, parentCommentId, io)
+        } else {
+          // Es un comentario nuevo, notificar a todos
+          await NotificationService.notifyNewComment(created, io)
+        }
+
         return ack?.({ ok: true, comment: created })
       } catch (err) {
         console.error('socket comment:create error', err)
-        // Mapear errores conocidos
         if (err.code === 'NOT_FOUND') return ack?.({ ok: false, error: 'not_found' })
         if (err.message === 'unauthenticated') return ack?.({ ok: false, error: 'unauthenticated' })
         return ack?.({ ok: false, error: 'server_error' })
@@ -46,6 +56,10 @@ export function setupChatNameSpace (io) {
         const updated = await updateComment(socket.user.user_id, commentId, message)
 
         nameSpace.emit('comment:updated', updated)
+
+        // Notificar sobre la actualización
+        await NotificationService.notifyCommentUpdate(updated, io)
+
         return ack?.({ ok: true, updated })
       } catch (err) {
         console.error('socket comment:update error', err)

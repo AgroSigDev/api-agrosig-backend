@@ -7,6 +7,7 @@ async function startServer () {
   // Iniciar el servidor HTTP
   await new Promise((resolve) => httpServer.listen({ port: config.port }, resolve))
   console.log(`Servidor HTTP corriendo en http://localhost:${config.port}`)
+  console.log(`WebSocket available on ws://localhost:${config.port}`)
 }
 
 startServer()
