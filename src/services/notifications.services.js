@@ -1,41 +1,50 @@
-import { Notifications } from '../models/index.js'
+import { Notifications, Comment } from '../models/index.js'
 
 export class NotificationService {
   static async notifyNewComment (comment, io) {
     try {
-      // Notificar a todos los usuarios sobre nuevo comentario
+      // Notify all connected users about new comment
       const notification = await Notifications.createNotification(
-        comment.user_id, // El que creó el comentario
+        comment.user_id, // Self-notification or broadcast
         'new_comment',
-        'Nuevo comentario',
-        'Se ha agregado un nuevo comentario',
-        '/comments'
+        'Nuevo Comentario',
+        'Se ha publicado un nuevo comentario',
+        `/comments#comment-${comment.comment_id}`
       )
 
-      // Emitir a todos en el namespace de notificaciones
-      io.of('/notifications').emit('notification:new', notification)
+      // Broadcast to all users in chat namespace
+      io.of('/chat').emit('notification:new_comment', notification)
+
       return notification
     } catch (error) {
       console.error('Error creating notification for new comment:', error)
+      throw error
     }
   }
 
-  static async notifyCommentReply (comment, parentCommentAuthorId, io) {
+  static async notifyCommentReply (comment, io) {
     try {
-      // Notificar solo al autor del comentario padre
+      const parentComment = await Comment.getCommentById(comment.parent_comment_id)
+
+      if (!parentComment || parentComment.user_id === comment.user_id) {
+        return null // Don't notify if replying to own comment
+      }
+
       const notification = await Notifications.createNotification(
-        parentCommentAuthorId,
+        parentComment.user_id,
         'comment_reply',
-        'Nueva respuesta',
-        'Alguien respondió a tu comentario',
-        '/comments'
+        'Nueva Respuesta',
+        `${comment.first_name} respondió a tu comentario`,
+        `/comments#comment-${comment.comment_id}`
       )
 
-      // Emitir solo al usuario específico
-      io.of('/notifications').to(`user_${parentCommentAuthorId}`).emit('notification:new', notification)
+      // Emit only to the specific user
+      io.of('/notifications').to(`user_${parentComment.user_id}`).emit('notification:new', notification)
+
       return notification
     } catch (error) {
       console.error('Error creating notification for comment reply:', error)
+      throw error
     }
   }
 

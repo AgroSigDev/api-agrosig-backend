@@ -37,7 +37,46 @@ async function markAsRead (notificationId, userId) {
   }
 }
 
+async function getUnreadByUserId (userId) {
+  try {
+    const query = {
+      text: `
+        SELECT * FROM notifications 
+        WHERE user_id = $1 AND is_read = false 
+        ORDER BY sent_at DESC
+      `,
+      values: [userId]
+    }
+    const result = await pool.query(query)
+    return result.rows
+  } catch (error) {
+    console.log('Error getting unread notifications:', error)
+    throw error
+  }
+}
+
+async function markAllAsRead (userId) {
+  try {
+    const query = {
+      text: `
+        UPDATE notifications 
+        SET is_read = true, status_notification = 'read'
+        WHERE user_id = $1 AND is_read = false
+        RETURNING notification_id
+      `,
+      values: [userId]
+    }
+    const result = await pool.query(query)
+    return result.rowCount // número de notificaciones actualizadas
+  } catch (error) {
+    console.log('Error marking all as read:', error)
+    throw error
+  }
+}
+
 export const Notifications = {
   createNotification,
-  markAsRead
+  markAsRead,
+  getUnreadByUserId,
+  markAllAsRead
 }

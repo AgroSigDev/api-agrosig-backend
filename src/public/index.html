@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Sockets - Chat & Notificaciones</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header .status {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #ff4757;
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #2ed573;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-connect {
+            background: #2ed573;
+            color: white;
+        }
+        .btn-disconnect {
+            background: #ff4757;
+            color: white;
+        }
+        .btn-action {
+            background: #3498db;
+            color: white;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .log {
+            height: 300px;
+            overflow-y: auto;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            padding: 15px;
+            background: #f8f9fa;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .log-entry.success {
+            border-left-color: #2ed573;
+            background: #d1f7e3;
+        }
+        .log-entry.error {
+            border-left-color: #ff4757;
+            background: #ffeaea;
+        }
+        .log-entry.warning {
+            border-left-color: #ffa502;
+            background: #fff4e6;
+        }
+        .log-entry.info {
+            border-left-color: #3498db;
+            background: #e3f2fd;
+        }
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 10px;
+        }
+        .message {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔌 Prueba de Sockets Backend</h1>
+        <div class="status" id="globalStatus">Desconectado</div>
+    </div>
+
+    <div class="container">
+        <!-- Panel de Chat -->
+        <div class="panel">
+            <h2>💬 Namespace: /chat</h2>
+            
+            <div class="controls">
+                <button class="btn-connect" onclick="connectChat()">Conectar Chat</button>
+                <button class="btn-disconnect" onclick="disconnectChat()" disabled>Desconectar Chat</button>
+            </div>
+
+            <div class="input-group">
+                <textarea id="messageInput" placeholder="Escribe tu mensaje..." rows="3"></textarea>
+            </div>
+
+            <div class="controls">
+                <button class="btn-action" onclick="sendMessage()" disabled>Enviar Mensaje</button>
+                <button class="btn-action" onclick="getAllComments()" disabled>Obtener Comentarios</button>
+                <button class="btn-action" onclick="clearChatLog()">Limpiar Log</button>
+            </div>
+
+            <h3>📋 Log del Chat</h3>
+            <div id="chatLog" class="log"></div>
+        </div>
+
+        <!-- Panel de Notificaciones -->
+        <div class="panel">
+            <h2>🔔 Namespace: /notifications</h2>
+            
+            <div class="controls">
+                <button class="btn-connect" onclick="connectNotifications()">Conectar Notificaciones</button>
+                <button class="btn-disconnect" onclick="disconnectNotifications()" disabled>Desconectar Notificaciones</button>
+            </div>
+
+            <div class="controls">
+                <button class="btn-action" onclick="getUnreadNotifications()" disabled>Obtener No Leídas</button>
+                <button class="btn-action" onclick="markAllAsRead()" disabled>Marcar Todas Leídas</button>
+                <button class="btn-action" onclick="clearNotificationLog()">Limpiar Log</button>
+            </div>
+
+            <h3>📊 Log de Notificaciones</h3>
+            <div id="notificationLog" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración
+        const SERVER_URL = 'http://localhost:4000';
+        const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlX2lkIjoxLCJpYXQiOjE3NTk1NTA1ODgsImV4cCI6MTc1OTU5Mzc4OH0.RgjgBRS-7a_9IIe7QhwgqWHxOorjlSA8EfCEG4rA_DY';
+
+        // Variables globales
+        let chatSocket = null;
+        let notificationSocket = null;
+
+        // Elementos DOM
+        const globalStatus = document.getElementById('globalStatus');
+        const chatLog = document.getElementById('chatLog');
+        const notificationLog = document.getElementById('notificationLog');
+        const messageInput = document.getElementById('messageInput');
+
+        // ==================== FUNCIONES DE LOG ====================
+        function addLog(container, message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `
+                <div class="timestamp">[${new Date().toLocaleTimeString()}]</div>
+                <div class="message">${message}</div>
+            `;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearChatLog() {
+            chatLog.innerHTML = '';
+            addLog(chatLog, 'Log limpiado', 'info');
+        }
+
+        function clearNotificationLog() {
+            notificationLog.innerHTML = '';
+            addLog(notificationLog, 'Log limpiado', 'info');
+        }
+
+        function updateGlobalStatus() {
+            const chatConnected = chatSocket?.connected;
+            const notificationConnected = notificationSocket?.connected;
+            
+            if (chatConnected && notificationConnected) {
+                globalStatus.textContent = 'Ambos Conectados ✅';
+                globalStatus.className = 'status connected';
+            } else if (chatConnected) {
+                globalStatus.textContent = 'Solo Chat Conectado ⚡';
+                globalStatus.className = 'status connected';
+            } else if (notificationConnected) {
+                globalStatus.textContent = 'Solo Notificaciones Conectado 🔔';
+                globalStatus.className = 'status connected';
+            } else {
+                globalStatus.textContent = 'Desconectado ❌';
+                globalStatus.className = 'status';
+            }
+        }
+
+        // ==================== CHAT SOCKET ====================
+        function connectChat() {
+            if (chatSocket?.connected) {
+                addLog(chatLog, '⚠️ Ya estás conectado al chat', 'warning');
+                return;
+            }
+
+            addLog(chatLog, '🔄 Conectando al namespace /chat...', 'info');
+
+            chatSocket = io(`${SERVER_URL}/chat`, {
+                auth: {
+                    token: TOKEN
+                },
+                transports: ['websocket', 'polling']
+            });
+
+            chatSocket.on('connect', () => {
+                addLog(chatLog, '✅ Conectado exitosamente al chat', 'success');
+                updateUI();
+                updateGlobalStatus();
+            });
+
+            chatSocket.on('connection:established', (data) => {
+                addLog(chatLog, `👋 ${data.message} - Usuario: ${data.user.email}`, 'success');
+            });
+
+            chatSocket.on('comment:new', (data) => {
+                addLog(chatLog, `📨 NUEVO COMENTARIO: "${data.message}" por ${data.first_name} ${data.paternal_surname}`, 'success');
+            });
+
+            chatSocket.on('comment:updated', (data) => {
+                addLog(chatLog, `✏️ COMENTARIO ACTUALIZADO: ID ${data.comment_id}`, 'info');
+            });
+
+            chatSocket.on('comment:deleted', (data) => {
+                addLog(chatLog, `🗑️ COMENTARIO ELIMINADO: ID ${data.comment_id}`, 'warning');
+            });
+
+            chatSocket.on('connect_error', (error) => {
+                addLog(chatLog, `❌ Error de conexión: ${error.message}`, 'error');
+                updateGlobalStatus();
+            });
+
+            chatSocket.on('disconnect', (reason) => {
+                addLog(chatLog, `📴 Desconectado: ${reason}`, 'warning');
+                updateUI();
+                updateGlobalStatus();
+            });
+        }
+
+        function disconnectChat() {
+            if (chatSocket) {
+                chatSocket.disconnect();
+                addLog(chatLog, '🔌 Desconectando del chat...', 'info');
+                updateUI();
+            }
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) {
+                addLog(chatLog, '⚠️ Escribe un mensaje antes de enviar', 'warning');
+                return;
+            }
+
+            if (!chatSocket?.connected) {
+                addLog(chatLog, '❌ No estás conectado al chat', 'error');
+                return;
+            }
+
+            addLog(chatLog, `📤 Enviando mensaje: "${message}"`, 'info');
+
+            chatSocket.emit('comment:create', {
+                message: message,
+                parentCommentId: null
+            }, (response) => {
+                if (response.ok) {
+                    addLog(chatLog, `✅ Mensaje enviado exitosamente - ID: ${response.comment.comment_id}`, 'success');
+                    messageInput.value = '';
+                } else {
+                    addLog(chatLog, `❌ Error al enviar: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function getAllComments() {
+            if (!chatSocket?.connected) {
+                addLog(chatLog, '❌ No estás conectado al chat', 'error');
+                return;
+            }
+
+            addLog(chatLog, '📥 Solicitando todos los comentarios...', 'info');
+
+            chatSocket.emit('comments:get_all', {}, (response) => {
+                if (response.ok) {
+                    addLog(chatLog, `✅ Recibidos ${response.comments.length} comentarios`, 'success');
+                    response.comments.forEach(comment => {
+                        addLog(chatLog, `   💬 "${comment.message}" por ${comment.first_name}`, 'info');
+                    });
+                } else {
+                    addLog(chatLog, `❌ Error: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        // ==================== NOTIFICATION SOCKET ====================
+        function connectNotifications() {
+            if (notificationSocket?.connected) {
+                addLog(notificationLog, '⚠️ Ya estás conectado a notificaciones', 'warning');
+                return;
+            }
+
+            addLog(notificationLog, '🔄 Conectando al namespace /notifications...', 'info');
+
+            notificationSocket = io(`${SERVER_URL}/notifications`, {
+                auth: {
+                    token: TOKEN
+                },
+                transports: ['websocket', 'polling']
+            });
+
+            notificationSocket.on('connect', () => {
+                addLog(notificationLog, '✅ Conectado exitosamente a notificaciones', 'success');
+                updateUI();
+                updateGlobalStatus();
+            });
+
+            notificationSocket.on('notification:new', (data) => {
+                addLog(notificationLog, `🔔 NUEVA NOTIFICACIÓN: ${data.title_notification} - ${data.message_notification}`, 'success');
+            });
+
+            notificationSocket.on('notification:updated', (data) => {
+                addLog(notificationLog, `📬 NOTIFICACIÓN ACTUALIZADA: ID ${data.notification_id}`, 'info');
+            });
+
+            notificationSocket.on('notifications:all_read', (data) => {
+                addLog(notificationLog, `✅ ${data.count} notificaciones marcadas como leídas`, 'success');
+            });
+
+            notificationSocket.on('connect_error', (error) => {
+                addLog(notificationLog, `❌ Error de conexión: ${error.message}`, 'error');
+                updateGlobalStatus();
+            });
+
+            notificationSocket.on('disconnect', (reason) => {
+                addLog(notificationLog, `📴 Desconectado: ${reason}`, 'warning');
+                updateUI();
+                updateGlobalStatus();
+            });
+        }
+
+        function disconnectNotifications() {
+            if (notificationSocket) {
+                notificationSocket.disconnect();
+                addLog(notificationLog, '🔌 Desconectando de notificaciones...', 'info');
+                updateUI();
+            }
+        }
+
+        function getUnreadNotifications() {
+            if (!notificationSocket?.connected) {
+                addLog(notificationLog, '❌ No estás conectado a notificaciones', 'error');
+                return;
+            }
+
+            addLog(notificationLog, '📥 Solicitando notificaciones no leídas...', 'info');
+
+            notificationSocket.emit('notifications:get_unread', {}, (response) => {
+                if (response.success) {
+                    if (response.notifications.length === 0) {
+                        addLog(notificationLog, 'ℹ️ No hay notificaciones no leídas', 'info');
+                    } else {
+                        addLog(notificationLog, `✅ ${response.notifications.length} notificaciones no leídas:`, 'success');
+                        response.notifications.forEach(notification => {
+                            addLog(notificationLog, `   📌 ${notification.title_notification}: ${notification.message_notification}`, 'info');
+                        });
+                    }
+                } else {
+                    addLog(notificationLog, `❌ Error: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function markAllAsRead() {
+            if (!notificationSocket?.connected) {
+                addLog(notificationLog, '❌ No estás conectado a notificaciones', 'error');
+                return;
+            }
+
+            addLog(notificationLog, '🔄 Marcando todas las notificaciones como leídas...', 'info');
+
+            notificationSocket.emit('notifications:mark_all_read', {}, (response) => {
+                if (response.success) {
+                    addLog(notificationLog, `✅ ${response.count} notificaciones marcadas como leídas`, 'success');
+                } else {
+                    addLog(notificationLog, `❌ Error: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        // ==================== UI UPDATES ====================
+        function updateUI() {
+            const chatConnected = chatSocket?.connected;
+            const notificationConnected = notificationSocket?.connected;
+
+            // Actualizar botones de chat
+            document.querySelector('button[onclick="connectChat"]').disabled = chatConnected;
+            document.querySelector('button[onclick="disconnectChat"]').disabled = !chatConnected;
+            document.querySelector('button[onclick="sendMessage"]').disabled = !chatConnected;
+            document.querySelector('button[onclick="getAllComments"]').disabled = !chatConnected;
+
+            // Actualizar botones de notificaciones
+            document.querySelector('button[onclick="connectNotifications"]').disabled = notificationConnected;
+            document.querySelector('button[onclick="disconnectNotifications"]').disabled = !notificationConnected;
+            document.querySelector('button[onclick="getUnreadNotifications"]').disabled = !notificationConnected;
+            document.querySelector('button[onclick="markAllAsRead"]').disabled = !notificationConnected;
+        }
+
+        // Permitir enviar mensaje con Enter
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Inicialización
+        addLog(chatLog, '🔌 Listo para conectar al chat. Haz clic en "Conectar Chat"', 'info');
+        addLog(notificationLog, '🔔 Listo para conectar a notificaciones. Haz clic en "Conectar Notificaciones"', 'info');
+    </script>
+</body>
+</html>

@@ -15,7 +15,6 @@ import activityRouter from './routes/activitys/activity.routes.js'
 import reportRouter from './routes/report/report.routes.js'
 import productionRouter from './routes/production_batch/production_batch.routes.js'
 import { setupChatNameSpace, socketNotifications } from './sockets/index.js'
-
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -40,10 +39,17 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter)
 
 // Configuracion de Socket.io
-const io = new Server(httpServer)
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  transports: ['websocket', 'polling']
+})
 
 io.on('connection', (socket) => {
-  console.log('Nuevo cliente conectado', socket.id)
+  console.log('Nuevo cliente conectado al namespace raíz', socket.id)
 })
 
 const __filename = fileURLToPath(import.meta.url)
@@ -65,7 +71,7 @@ app.use('/report', reportRouter)
 app.use('/production', productionRouter)
 
 // Ruta Raiz
-app.get('/', (request, response) => {
+app.get('/test-sockets', (request, response) => {
   response.json({
     description: 'Proyecto INTEGRADOR - API AGROSIG BACKEND - DAVIDCH',
     version: '1.0.0',
@@ -77,6 +83,10 @@ app.get('/', (request, response) => {
     ],
     documentation: `${config.docs.baseUrl || 'http://localhost:' + config.port}/api-docs`
   })
+})
+
+app.get('/test-sockets', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
 
 // Configurar namespace (chat, notifications)

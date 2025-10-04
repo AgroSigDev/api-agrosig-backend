@@ -1,14 +1,46 @@
 import { pool } from '../../lib/db.js'
 
 async function createComment (userId, message, parentCommentId = null) {
-  const query = {
-    text: `INSERT INTO comments (user_id, message, parent_comment_id, comment_level, is_edited, is_deleted, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, false, false, NOW(), NOW())
-           RETURNING comment_id, user_id, message, parent_comment_id, comment_level, created_at, updated_at`,
-    values: [userId, message, parentCommentId, parentCommentId ? 1 : 0] // nivel 1 si es respuesta
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+
+    let commentLevel = 0
+    if (parentCommentId) {
+      // Verify parent exists and get its level
+      const parentResult = await client.query(
+        'SELECT comment_level, is_deleted FROM comments WHERE comment_id = $1',
+        [parentCommentId]
+      )
+
+      if (parentResult.rows.length === 0) {
+        throw new Error('PARENT_COMMENT_NOT_FOUND')
+      }
+      if (parentResult.rows[0].is_deleted) {
+        throw new Error('PARENT_COMMENT_DELETED')
+      }
+
+      commentLevel = parentResult.rows[0].comment_level + 1
+    }
+
+    const query = {
+      text: `INSERT INTO comments (user_id, message, parent_comment_id, comment_level, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, NOW(), NOW())
+             RETURNING comment_id, user_id, message, parent_comment_id, comment_level, created_at, updated_at`,
+      values: [userId, message, parentCommentId, commentLevel]
+    }
+
+    const result = await client.query(query)
+    await client.query('COMMIT')
+
+    return result.rows[0]
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
   }
-  const result = await pool.query(query)
-  return result.rows[0]
 }
 
 async function getCommentById (commentId) {
@@ -19,7 +51,12 @@ async function getCommentById (commentId) {
            WHERE c.comment_id = $1`,
     values: [commentId]
   }
+
   const result = await pool.query(query)
+  if (result.rows.length === 0) {
+    throw new Error('COMMENT_NOT_FOUND')
+  }
+
   return result.rows[0]
 }
 
