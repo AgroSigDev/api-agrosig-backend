@@ -7,5 +7,6 @@ import { Crop } from './crop/crop.model.js'
 import { Activitys } from './activitys/activitys.model.js'
 import { Report } from './report/report.model.js'
 import { productionBatch } from './production_batch/production_batch.model.js'
+import { Comment } from './chats/chats.model.js'
 
-export { Users, Auth, Role, Plot, Weather, Crop, Activitys, Report, productionBatch }
+export { Users, Auth, Role, Plot, Weather, Crop, Activitys, Report, productionBatch, Comment }
