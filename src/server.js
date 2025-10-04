@@ -11,6 +11,7 @@ import cropRouter from './routes/crop/crop.routes.js'
 import activityRouter from './routes/activitys/activity.routes.js'
 import reportRouter from './routes/report/report.routes.js'
 import productionRouter from './routes/production_batch/production_batch.routes.js'
+import commentRouter from './routes/chat/chat.route.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -41,6 +42,7 @@ app.use('/crop', cropRouter)
 app.use('/activity', activityRouter)
 app.use('/report', reportRouter)
 app.use('/production', productionRouter)
+app.use('/comment', commentRouter)
 
 // Ruta Raiz
 app.get('/', (request, response) => {
