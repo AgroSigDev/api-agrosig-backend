@@ -34,15 +34,15 @@ setupSwagger(app)
 app.use('/images', express.static(path.join(__dirname, 'src/uploads/profile')))
 
 // Rutas - Endpoints
-app.use('/users', userRouter)
-app.use('/auth', authRouter)
-app.use('/plots', plotRouter)
-app.use('/weather', weatherPlotRouter)
-app.use('/crop', cropRouter)
-app.use('/activity', activityRouter)
-app.use('/report', reportRouter)
-app.use('/production', productionRouter)
-app.use('/comment', commentRouter)
+app.use('/api', userRouter)
+app.use('/api', authRouter)
+app.use('/api', plotRouter)
+app.use('/api', weatherPlotRouter)
+app.use('/api', cropRouter)
+app.use('/api', activityRouter)
+app.use('/api', reportRouter)
+app.use('/api', productionRouter)
+app.use('/api', commentRouter)
 
 // Ruta Raiz
 app.get('/', (request, response) => {

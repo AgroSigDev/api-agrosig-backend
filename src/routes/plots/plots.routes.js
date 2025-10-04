@@ -45,7 +45,7 @@ router.post('/register', autenticate, async (request, response, next) => {
 })
 
 // PATCH /plots/:plotId
-router.patch('/:plotId', autenticate, async (request, response, next) => {
+router.patch('/update/:plotId', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id
     const plotId = request.params.plotId
@@ -66,7 +66,7 @@ router.patch('/:plotId', autenticate, async (request, response, next) => {
 })
 
 // DELETE /plots/:plotId
-router.delete('/:plotId', autenticate, async (request, response, next) => {
+router.delete('/delete/:plotId', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id
     const plotId = request.params.plotId
