@@ -121,6 +121,7 @@ async function loginUser (user) {
   const refreshToken = generateRefreshToken(foundUser)
 
   return {
+    user: foundUser,
     token,
     refreshToken
   }
