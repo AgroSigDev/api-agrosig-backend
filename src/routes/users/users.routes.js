@@ -8,7 +8,7 @@ import { uploadProfile } from '../../helpers/index.js'
 const router = express.Router()
 
 // GET /users/:id
-router.get('/:id', autenticate, authorize(['admin']), async (request, response, next) => {
+router.get('/get-user/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   try {
     const userId = request.params.id
     const result = await getUserById(userId)

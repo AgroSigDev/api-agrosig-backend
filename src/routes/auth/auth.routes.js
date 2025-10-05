@@ -32,11 +32,15 @@ router.post('/register', uploadProfile, async (request, response, next) => {
 router.post('/login', async (request, response, next) => {
   try {
     const userData = request.body
-    const token = await loginUser(userData)
+    const result = await loginUser(userData)
     response.status(200).json({
       success: true,
       message: 'User logged in successfully',
-      data: token
+      data: {
+        user: result.user,
+        token: result.token,
+        refreshToken: result.refreshToken
+      }
     })
   } catch (error) {
     console.error('Error logging in user:', error)
