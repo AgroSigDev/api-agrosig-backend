@@ -1,5 +1,5 @@
 import express from 'express'
-import { registerPlot, getUbicationCoords, updatePlotById, deleteUserById } from '../../controllers/index.js'
+import { registerPlot, getUbicationCoords, getPlotByUserId, updatePlotById, deleteUserById } from '../../controllers/index.js'
 import { autenticate } from '../../middlewares/index.js'
 
 const router = express.Router()
@@ -18,6 +18,27 @@ router.get('/ubication-plot/:id', autenticate, async (request, response, next) =
     response.status(500).json({
       success: false,
       message: 'Error fetching plot coordinates',
+      error: error.message
+    })
+  }
+})
+
+// GET /plots/get-plot/:plotId
+router.get('/get-plot/:plotId', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.user.user_id
+    const plotId = request.params.plotId
+
+    const result = await getPlotByUserId(userId, plotId)
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    console.error('Error fetching plot data:', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error fetching plot data',
       error: error.message
     })
   }

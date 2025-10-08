@@ -5,6 +5,11 @@ async function registerPlot (userId, plot) {
   return data
 }
 
+async function getPlotByUserId (userId, plotId) {
+  const data = await Plot.getPlotbyUserId(userId, plotId)
+  return data
+}
+
 async function getUbicationCoords (userId, location) {
   const data = await Plot.getUbicationCoords(userId, location)
   return data
@@ -28,6 +33,7 @@ export {
   registerPlot,
   getUbicationCoords,
   getAllPlots,
+  getPlotByUserId,
   updatePlotById,
   detelePlotById
 }
