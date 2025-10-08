@@ -136,6 +136,34 @@ async function getPlotbyId (plotId) {
 }
 
 /**
+ * Retrieves a plot by its ID and associated user ID, including spatial coordinates.
+ *
+ * @async
+ * @function getPlotbyUserId
+ * @param {number|string} userId - The ID of the user who owns the plot.
+ * @param {number|string} plotId - The ID of the plot to retrieve.
+ * @returns {Promise<Object|undefined>} A promise that resolves to the plot object with longitude, latitude, and other details, or undefined if not found.
+ * @throws {Error} If there is an error during the database query.
+ */
+
+async function getPlotbyUserId (userId, plotId) {
+  try {
+    const query = {
+      text: `SELECT plot_id, user_id, plot_name, location, area, 
+                    ST_X(geom) as longitude, ST_Y(geom) as latitude,
+                    geom, is_active, created_at
+             FROM plots WHERE plot_id = $1 AND user_id= $2`,
+      values: [userId, plotId]
+    }
+    const result = await pool.query(query)
+    return result.rows[0]
+  } catch (error) {
+    console.error('Error getting plot by ID:', error)
+    throw error
+  }
+}
+
+/**
  * Retrieves all plot records from the database.
  *
  * @async
@@ -287,6 +315,7 @@ export const Plot = {
   createPlot,
   getPlotByUserId,
   getPlotbyId,
+  getPlotbyUserId,
   getAllPlots,
   getUbicationCoords,
   updatePlotById,

@@ -13,7 +13,12 @@ async function updateWeatherData (userId, plotId) {
 
   // 3. Guardar o actualizar en BD
   const result = await Weather.saveOrUpdateWeatherData(userId, plotId, weatherData)
-  return result
+  return {
+    climate_id: result.climate_id,
+    plot_id: plotId,
+    ...weatherData,
+    date: new Date().toISOString().split('T')[0] // Fecha actual
+  }
 }
 
 async function fetchWeeklyWeather (userId, plotId) {
