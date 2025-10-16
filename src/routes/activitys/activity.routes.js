@@ -1,10 +1,56 @@
 import express from 'express'
-import { registerActivity } from '../../controllers/index.js'
+import { registerActivity, getActivities, getActivity } from '../../controllers/index.js'
 import { autenticate } from '../../middlewares/index.js'
 
 const router = express.Router()
 
-// POST /crop
+// GET /activities/crop/:cropId
+router.get('/crop/:cropId', autenticate, async (request, response) => {
+  try {
+    const userId = request.user.user_id
+    const { cropId } = request.params
+
+    const activities = await getActivities(userId, cropId)
+
+    response.status(201).json({
+      success: true,
+      message: 'Activity created successfully',
+      data: activities
+    })
+  } catch (error) {
+    console.log('Error getting activities: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error retrieving activities',
+      error: error.message
+    })
+  }
+})
+
+// GET /activities/:activityId
+router.get('/:activityId', autenticate, async (request, response) => {
+  try {
+    const userId = request.user.user_id
+    const { activityId } = request.params
+
+    const activities = await getActivity(userId, activityId)
+
+    response.status(201).json({
+      success: true,
+      message: 'Activity created successfully',
+      data: activities
+    })
+  } catch (error) {
+    console.log('Error getting activities: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error retrieving activities',
+      error: error.message
+    })
+  }
+})
+
+// POST /activity/register
 router.post('/register/:cropId', autenticate, async (request, response, next) => {
   try {
     const userId = request.user.user_id

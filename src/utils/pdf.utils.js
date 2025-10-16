@@ -1,220 +1,318 @@
 import PDFDocument from 'pdfkit'
 
+// ===== FUNCIONES AUXILIARES DE FORMATO =====
+
 function formatDate (date) {
   if (!date) return '-'
-  return new Date(date).toLocaleDateString('es-ES')
+  return new Date(date).toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
 }
 
 function formatCurrency (amount) {
   return `$${Number(amount || 0).toFixed(2)}`
 }
 
-function addTableHeader (doc, headers, columnWidths, yPosition) {
-  doc.fontSize(10).font('Helvetica-Bold')
+// ===== FUNCIONES PARA CONSTRUCCIÓN DE TABLAS Y SECCIONES =====
+
+function addTableHeader (doc, headers, columnWidths, yPosition, headerColor = '#2E7D32') {
+  doc.save()
+  doc.roundedRect(30, yPosition - 5, 535, 20, 3).fill(headerColor)
+
+  doc.fontSize(9).font('Helvetica-Bold').fillColor('white')
   let xPosition = 30
   headers.forEach((header, index) => {
-    doc.text(header, xPosition, yPosition, { width: columnWidths[index], align: 'left' })
+    doc.text(header, xPosition + 8, yPosition, {
+      width: columnWidths[index] - 16,
+      align: 'left'
+    })
     xPosition += columnWidths[index]
   })
-  // Línea debajo del encabezado
-  doc.moveTo(30, yPosition + 15).lineTo(565, yPosition + 15).stroke()
+
+  doc.restore()
   return yPosition + 20
 }
 
-function addTableRow (doc, rowData, columnWidths, yPosition) {
-  doc.fontSize(9).font('Helvetica')
+function addTableRow (doc, rowData, columnWidths, yPosition, isEven = false) {
+  if (isEven) {
+    doc.save()
+    doc.rect(30, yPosition - 3, 535, 15).fill('#f8f9fa')
+    doc.restore()
+  }
+
+  doc.fontSize(8).font('Helvetica').fillColor('#333333')
   let xPosition = 30
   rowData.forEach((cell, index) => {
-    doc.text(cell.toString(), xPosition, yPosition, {
-      width: columnWidths[index],
+    doc.text(cell.toString(), xPosition + 8, yPosition, {
+      width: columnWidths[index] - 16,
       align: 'left',
       lineBreak: false
     })
     xPosition += columnWidths[index]
   })
+
+  doc.moveTo(30, yPosition + 12).lineTo(565, yPosition + 12)
+    .strokeColor('#e0e0e0').lineWidth(0.3).stroke()
+
   return yPosition + 15
 }
 
+function addSectionHeader (doc, title, yPosition) {
+  doc.save()
+  doc.fontSize(12).font('Helvetica-Bold').fillColor('#2E7D32')
+  doc.text(title, 30, yPosition)
+
+  doc.moveTo(30, yPosition + 5).lineTo(120, yPosition + 5)
+    .strokeColor('#4CAF50').lineWidth(1).stroke()
+  doc.restore()
+
+  return yPosition + 20
+}
+
+function addInfoCard (doc, label, value, x, y, width) {
+  doc.save()
+  doc.roundedRect(x, y, width, 22, 4)
+    .fill('#f8f9fa')
+    .stroke('#e0e0e0')
+
+  doc.fontSize(7).font('Helvetica-Bold').fillColor('#666666')
+  doc.text(label.toUpperCase(), x + 6, y + 4)
+  doc.fontSize(8).font('Helvetica').fillColor('#333333')
+  doc.text(value, x + 6, y + 13)
+  doc.restore()
+}
+
+// ===== VERIFICACIÓN DE SALTO DE PÁGINA =====
+
+function checkPageBreak (doc, yPosition, neededSpace = 50) {
+  const pageHeight = doc.page.height - doc.page.margins.bottom
+  const limit = pageHeight - 50 // límite de contenido antes del pie de página
+
+  if (yPosition + neededSpace >= limit) {
+    doc.addPage()
+    return doc.page.margins.top + 30 // posición inicial segura en nueva página
+  }
+  return yPosition
+}
+
+// ===== CONSTRUCCIÓN DEL DOCUMENTO PDF =====
+
 async function buildPDF (data, dataCallback, endCallback) {
-  const doc = new PDFDocument({ margin: 30, size: 'A4' })
+  const doc = new PDFDocument({
+    margin: 25,
+    size: 'A4',
+    bufferPages: true
+  })
 
   doc.on('data', dataCallback)
   doc.on('end', endCallback)
 
-  // Logo y Encabezado de la empresa
-  doc.fontSize(16).font('Helvetica-Bold')
-  doc.text('Soluciones AgroTech S.A de C.V', { align: 'center' })
-  doc.fontSize(10).font('Helvetica')
-  doc.text('Sistema de Gestión Agrícola', { align: 'center' })
+  let yPosition = 50
 
-  // Fecha de generación del reporte
-  doc.fontSize(8).text(`Reporte generado el: ${new Date().toLocaleDateString('es-ES')}`, { align: 'right' })
-  doc.moveDown(0.5)
+  // ===== ENCABEZADO GENERAL =====
+  doc.save()
+  doc.rect(0, 0, doc.page.width, 70).fill('#2E7D32')
 
-  // Título del reporte
-  doc.fontSize(18).font('Helvetica-Bold')
-  doc.text('Reporte de Cultivo', { align: 'center' })
-  doc.moveDown()
+  doc.fontSize(14).font('Helvetica-Bold').fillColor('white')
+  doc.text('SOLUCIONES AGROTEC S.A. DE C.V.', 30, 25)
 
-  // ===== RESUMEN DEL CULTIVO =====
-  doc.fontSize(14).font('Helvetica-Bold')
-  doc.text('Resumen del Cultivo', { underline: true })
-  doc.moveDown(0.5)
+  doc.fontSize(9).font('Helvetica').fillColor('#E8F5E8')
+  doc.text('Sistema de Gestión Agrícola', 30, 42)
 
-  let yPosition = doc.y
-  const resumenHeaders = ['Tipo de Cultivo', 'Variedad', 'Fecha Siembra', 'Fecha Cosecha']
-  const resumenWidths = [120, 120, 100, 100]
+  const generatedDate = new Date().toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+  doc.fontSize(8).fillColor('white')
+  doc.text(`Generado: ${generatedDate}`, doc.page.width - 140, 30)
+  doc.restore()
 
-  yPosition = addTableHeader(doc, resumenHeaders, resumenWidths, yPosition)
+  yPosition = 90
 
-  const resumenData = [
-    data.crop.crop_type || '-',
-    data.crop.crop_variety || '-',
-    formatDate(data.crop.planting_date),
-    formatDate(data.crop.harvest_date)
-  ]
+  // ===== TÍTULO DEL REPORTE =====
+  doc.fontSize(16).font('Helvetica-Bold').fillColor('#2E7D32')
+  doc.text('REPORTE DE CULTIVO', 30, yPosition, { align: 'center' })
+  yPosition += 30
 
-  yPosition = addTableRow(doc, resumenData, resumenWidths, yPosition)
-  doc.moveTo(30, yPosition).lineTo(565, yPosition).stroke()
-  doc.moveDown()
+  // ===== INFORMACIÓN DEL CULTIVO =====
+  yPosition = addSectionHeader(doc, 'INFORMACIÓN DEL CULTIVO', yPosition)
 
-  // ===== RESUMEN DE COSTOS =====
-  doc.fontSize(14).font('Helvetica-Bold')
-  doc.text('Resumen de Costos', { underline: true })
-  doc.moveDown(0.5)
+  const cardWidth = 125
+  const gap = 10
 
-  // Costo total del cultivo
-  doc.fontSize(10).font('Helvetica-Bold')
-  doc.text(`Costo Total del Cultivo: ${formatCurrency(data.summary.totalCost)}`)
-  doc.moveDown(0.5)
+  addInfoCard(doc, 'Tipo de Cultivo', data.crop.crop_type || '-', 30, yPosition, cardWidth)
+  addInfoCard(doc, 'Variedad', data.crop.crop_variety || '-', 30 + cardWidth + gap, yPosition, cardWidth)
+  addInfoCard(doc, 'Fecha Siembra', formatDate(data.crop.planting_date), 30 + (cardWidth + gap) * 2, yPosition, cardWidth)
+  addInfoCard(doc, 'Fecha Cosecha', formatDate(data.crop.harvest_date), 30 + (cardWidth + gap) * 3, yPosition, cardWidth)
+  yPosition += 47
 
-  // Costo por actividad
-  doc.fontSize(12).font('Helvetica-Bold')
-  doc.text('Costos por Actividad:')
-  doc.moveDown(0.3)
+  // ===== RESUMEN FINANCIERO =====
+  yPosition = checkPageBreak(doc, yPosition, 80)
+  yPosition = addSectionHeader(doc, 'RESUMEN FINANCIERO', yPosition)
 
-  if (data.summary.costByActivityType && data.summary.costByActivityType.length > 0) {
-    yPosition = doc.y
-    const actividadHeaders = ['Actividad', 'Costo Total']
-    const actividadWidths = [400, 100]
+  doc.save()
+  doc.roundedRect(30, yPosition, 535, 35, 6)
+    .fill('#E8F5E8')
+    .stroke('#4CAF50')
 
-    yPosition = addTableHeader(doc, actividadHeaders, actividadWidths, yPosition)
+  doc.fontSize(10).font('Helvetica-Bold').fillColor('#2E7D32')
+  doc.text('COSTO TOTAL DEL CULTIVO', 45, yPosition + 8)
+  doc.fontSize(14).font('Helvetica-Bold').fillColor('#1B5E20')
+  doc.text(formatCurrency(data.summary.totalCost), 45, yPosition + 18)
+  doc.restore()
+  yPosition += 55
 
-    data.summary.costByActivityType.forEach(activity => {
-      yPosition = addTableRow(doc, [activity.activity_type, formatCurrency(activity.total_cost)], actividadWidths, yPosition)
+  // ===== DISTRIBUCIÓN DE COSTOS =====
+  if (data.summary.costByActivityType?.length) {
+    yPosition = checkPageBreak(doc, yPosition, 100)
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#333333')
+    doc.text('Distribución por Tipo de Actividad:', 30, yPosition)
+    yPosition += 15
+
+    const headers = ['Actividad', 'Costo Total', 'Porcentaje']
+    const widths = [300, 120, 115]
+    yPosition = addTableHeader(doc, headers, widths, yPosition, '#388E3C')
+
+    data.summary.costByActivityType.forEach((activity, i) => {
+      const percentage = data.summary.totalCost > 0
+        ? ((Number(activity.total_cost) / data.summary.totalCost) * 100).toFixed(1)
+        : '0.0'
+      yPosition = addTableRow(doc, [
+        activity.activity_type,
+        formatCurrency(activity.total_cost),
+        `${percentage}%`
+      ], widths, yPosition, i % 2 === 0)
     })
-
-    doc.moveTo(30, yPosition).lineTo(565, yPosition).stroke()
-  } else {
-    doc.fontSize(10).font('Helvetica').text('No hay datos de costos por actividad')
+    yPosition += 20
   }
-  doc.moveDown()
 
-  // Costo por insumo
-  doc.fontSize(12).font('Helvetica-Bold')
-  doc.text('Costos por Insumo:')
-  doc.moveDown(0.3)
+  if (data.summary.costByInput?.length) {
+    yPosition = checkPageBreak(doc, yPosition, 100)
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#333333')
+    doc.text('Distribución por Tipo de Insumo:', 30, yPosition)
+    yPosition += 15
 
-  if (data.summary.costByInput && data.summary.costByInput.length > 0) {
-    yPosition = doc.y
-    const insumoHeaders = ['Insumo', 'Costo Total']
-    const insumoWidths = [400, 100]
+    const headers = ['Insumo', 'Costo Total', 'Porcentaje']
+    const widths = [300, 120, 115]
+    yPosition = addTableHeader(doc, headers, widths, yPosition, '#388E3C')
 
-    yPosition = addTableHeader(doc, insumoHeaders, insumoWidths, yPosition)
-
-    data.summary.costByInput.forEach(input => {
-      yPosition = addTableRow(doc, [input.input_name, formatCurrency(input.total_cost)], insumoWidths, yPosition)
+    data.summary.costByInput.forEach((input, i) => {
+      const percentage = data.summary.totalCost > 0
+        ? ((Number(input.total_cost) / data.summary.totalCost) * 100).toFixed(1)
+        : '0.0'
+      yPosition = addTableRow(doc, [
+        input.input_name,
+        formatCurrency(input.total_cost),
+        `${percentage}%`
+      ], widths, yPosition, i % 2 === 0)
     })
-
-    doc.moveTo(30, yPosition).lineTo(565, yPosition).stroke()
-  } else {
-    doc.fontSize(10).font('Helvetica').text('No hay datos de costos por insumo')
+    yPosition += 25
   }
-  doc.moveDown()
 
-  // Evolución de costos mensual (si existe)
-  if (data.summary.costEvolution && data.summary.costEvolution.length > 0) {
-    doc.fontSize(12).font('Helvetica-Bold')
-    doc.text('Evolución de Costos Mensual:')
-    doc.moveDown(0.3)
+  if (data.summary.costEvolution?.length) {
+    yPosition = checkPageBreak(doc, yPosition, 80)
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#333333')
+    doc.text('Evolución Mensual de Costos:', 30, yPosition)
+    yPosition += 15
 
-    yPosition = doc.y
-    const evolucionHeaders = ['Mes', 'Costo Total']
-    const evolucionWidths = [400, 100]
+    const headers = ['Mes', 'Costo Total']
+    const widths = [400, 135]
+    yPosition = addTableHeader(doc, headers, widths, yPosition, '#388E3C')
 
-    yPosition = addTableHeader(doc, evolucionHeaders, evolucionWidths, yPosition)
-
-    data.summary.costEvolution.forEach(evolution => {
-      yPosition = addTableRow(doc, [formatDate(evolution.month), formatCurrency(evolution.total_cost)], evolucionWidths, yPosition)
+    data.summary.costEvolution.forEach((evolution, i) => {
+      yPosition = addTableRow(doc, [
+        formatDate(evolution.month),
+        formatCurrency(evolution.total_cost)
+      ], widths, yPosition, i % 2 === 0)
     })
-
-    doc.moveTo(30, yPosition).lineTo(565, yPosition).stroke()
-    doc.moveDown()
+    yPosition += 30
   }
 
   // ===== DETALLE DE ACTIVIDADES E INSUMOS =====
-  doc.fontSize(14).font('Helvetica-Bold')
-  doc.text('Detalle de Actividades e Insumos', { underline: true })
-  doc.moveDown(0.5)
+  if (data.activities?.length) {
+    yPosition = checkPageBreak(doc, yPosition, 100)
+    yPosition = addSectionHeader(doc, 'DETALLE DE ACTIVIDADES E INSUMOS', yPosition)
 
-  if (data.activities && data.activities.length > 0) {
     data.activities.forEach((activity, index) => {
-      // Verificar si hay espacio en la página
-      if (doc.y > 700) {
-        doc.addPage()
+      yPosition = checkPageBreak(doc, yPosition, 130)
+
+      doc.save()
+      doc.roundedRect(30, yPosition, 535, 22, 4)
+        .fill('#E3F2FD')
+        .stroke('#2196F3')
+      doc.fontSize(10).font('Helvetica-Bold').fillColor('#1565C0')
+      doc.text(`ACTIVIDAD ${index + 1}: ${activity.activity_type.toUpperCase()}`, 38, yPosition + 7)
+      doc.restore()
+      yPosition += 30
+
+      doc.fontSize(8).font('Helvetica').fillColor('#333333')
+      doc.text(`Fecha: ${formatDate(activity.date)}`, 38, yPosition)
+      doc.text(`Costo Total: ${formatCurrency(activity.cost_total)}`, 200, yPosition)
+      yPosition += 12
+
+      if (activity.description) {
+        const descHeight = doc.heightOfString(activity.description, { width: 500 })
+        doc.text(`Descripción: ${activity.description}`, 38, yPosition, { width: 500 })
+        yPosition += descHeight + 8
+      } else {
+        yPosition += 5
       }
 
-      // Información de la actividad
-      doc.fontSize(11).font('Helvetica-Bold')
-      doc.text(`Actividad ${index + 1}: ${activity.activity_type}`)
-
-      doc.fontSize(9).font('Helvetica')
-      doc.text(`Fecha: ${formatDate(activity.date)} | Costo: ${formatCurrency(activity.cost_total)}`)
-      doc.text(`Descripción: ${activity.description || 'Sin descripción'}`)
-      doc.moveDown(0.3)
-
-      // Insumos de la actividad
-      const insumos = data.inputs ? data.inputs.filter(i => i.activity_id === activity.activity_id) : []
-
+      const insumos = data.inputs?.filter(i => i.activity_id === activity.activity_id) || []
       if (insumos.length > 0) {
-        yPosition = doc.y
-        const detalleHeaders = ['Insumo', 'Cantidad', 'Unidad', 'Costo Unitario', 'Costo Total']
-        const detalleWidths = [150, 70, 60, 90, 90]
+        yPosition = checkPageBreak(doc, yPosition, 80)
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#666666')
+        doc.text('INSUMOS UTILIZADOS:', 38, yPosition)
+        yPosition += 12
 
-        yPosition = addTableHeader(doc, detalleHeaders, detalleWidths, yPosition)
+        const insumoHeaders = ['Insumo', 'Cantidad', 'Unidad', 'Costo Unitario', 'Costo Total']
+        const insumoWidths = [180, 70, 60, 90, 90]
+        yPosition = addTableHeader(doc, insumoHeaders, insumoWidths, yPosition, '#1976D2')
 
-        insumos.forEach(insumo => {
+        insumos.forEach((insumo, i) => {
           yPosition = addTableRow(doc, [
             insumo.input_name,
             insumo.quantity.toString(),
             insumo.unit,
             formatCurrency(insumo.unit_cost),
             formatCurrency(insumo.cost_total)
-          ], detalleWidths, yPosition)
+          ], insumoWidths, yPosition, i % 2 === 0)
         })
-
-        doc.moveTo(30, yPosition).lineTo(565, yPosition).stroke()
-      } else {
-        doc.fontSize(9).font('Helvetica').text('No hay insumos registrados para esta actividad')
+        yPosition += 15
       }
 
-      doc.moveDown()
-
-      // Línea separadora entre actividades
       if (index < data.activities.length - 1) {
-        doc.moveTo(30, doc.y).lineTo(565, doc.y).stroke()
-        doc.moveDown()
+        yPosition = checkPageBreak(doc, yPosition, 20)
+        doc.moveTo(30, yPosition).lineTo(565, yPosition)
+          .strokeColor('#e0e0e0').lineWidth(0.5).stroke()
+        yPosition += 15
       }
     })
   } else {
-    doc.fontSize(10).font('Helvetica').text('No hay actividades registradas')
+    yPosition = checkPageBreak(doc, yPosition, 30)
+    doc.fontSize(9).font('Helvetica').fillColor('#666666')
+    doc.text('No hay actividades registradas para este cultivo.', 30, yPosition)
+    yPosition += 20
   }
 
-  // Pie de página
-  const pageHeight = doc.page.height
-  doc.fontSize(8).font('Helvetica')
-  doc.text('Soluciones AgroTech S.A de C.V - Sistema de Gestión Agrícola', 30, pageHeight - 40, { align: 'center' })
-  doc.text(`Página ${doc.bufferedPageRange().count}`, 30, pageHeight - 25, { align: 'center' })
+  // ===== PIE DE PÁGINA =====
+  const pages = doc.bufferedPageRange()
+  for (let i = 0; i < pages.count; i++) {
+    doc.switchToPage(i)
+    const bottom = doc.page.height - 40
+
+    doc.save()
+    doc.rect(0, bottom, doc.page.width, 40).fill('#2E7D32')
+    doc.fontSize(8).fillColor('white')
+    doc.text('Soluciones AgroTech S.A. de C.V. - Sistema de Gestión Agrícola',
+      doc.page.width / 2, bottom + 12, { align: 'center' })
+    doc.text(`Página ${i + 1} de ${pages.count}`,
+      doc.page.width / 2, bottom + 24, { align: 'center' })
+    doc.restore()
+  }
 
   doc.end()
 }

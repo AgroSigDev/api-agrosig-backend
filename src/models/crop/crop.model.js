@@ -229,7 +229,8 @@ async function deleteCropByUserId (userId, cropId) {
     }
     await pool.query(deleteQuery)
   } catch (error) {
-
+    console.log('Error deleting crop: ', error)
+    throw error
   }
 }
 

@@ -18,7 +18,7 @@ async function createActivityWithInputs (userId, cropId, activityData, inputs) {
       throw new Error('The crop does not belong to the user or is not active')
     }
 
-    // Verificar duplicados recientes
+    // Validación de duplicados más flexible
     const duplicate = await checkDuplicateActivity(client, userId, cropId, activityData)
     if (duplicate) {
       throw new Error('Duplicate activity detected. Please wait before creating another identical activity.')
@@ -101,10 +101,13 @@ async function createActivityWithInputs (userId, cropId, activityData, inputs) {
 async function checkDuplicateActivity (client, userId, cropId, activityData) {
   const query = {
     text: `
-      SELECT activity_id FROM activity 
-      WHERE user_id = $1 AND crop_id = $2 AND activity_type = $3 
-      AND date = $4 AND description = $5
-      AND created_at > NOW() - INTERVAL '5 minutes'
+       SELECT activity_id FROM activity 
+      WHERE user_id = $1 
+        AND crop_id = $2 
+        AND activity_type = $3 
+        AND date = $4 
+        AND description = $5
+        AND created_at > NOW() - INTERVAL '10 minutes'
       LIMIT 1
     `,
     values: [
@@ -177,8 +180,33 @@ async function getActivitiesByCrop (userId, cropId) {
   try {
     const query = {
       text: `
-        SELECT a.*, 
-               COALESCE(json_agg(i) FILTER (WHERE i.input_id IS NOT NULL), '[]') as inputs
+        SELECT 
+          a.activity_id,
+          a.crop_id,
+          a.user_id,
+          a.activity_type,
+          a.date,
+          a.description,
+          a.cost_total,
+          a.created_at,
+          a.updated_at,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'input_id', i.input_id,
+                'input_name', i.input_name,
+                'unit', i.unit,
+                'quantity', i.quantity,
+                'unit_cost', i.unit_cost,
+                'cost_unit', i.cost_unit,
+                'base_unit', i.base_unit,
+                'conversion_factor', i.conversion_factor,
+                'cost_total', i.cost_total,
+                'created_at', i.created_at
+              )
+            ) FILTER (WHERE i.input_id IS NOT NULL), 
+            '[]'
+          ) as inputs
         FROM activity a
         LEFT JOIN input_used i ON a.activity_id = i.activity_id
         WHERE a.crop_id = $1 AND a.user_id = $2
@@ -200,8 +228,33 @@ async function getActivityById (userId, activityId) {
   try {
     const query = {
       text: `
-        SELECT a.*, 
-               COALESCE(json_agg(i) FILTER (WHERE i.input_id IS NOT NULL), '[]') as inputs
+        SELECT 
+          a.activity_id,
+          a.crop_id,
+          a.user_id,
+          a.activity_type,
+          a.date,
+          a.description,
+          a.cost_total,
+          a.created_at,
+          a.updated_at,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'input_id', i.input_id,
+                'input_name', i.input_name,
+                'unit', i.unit,
+                'quantity', i.quantity,
+                'unit_cost', i.unit_cost,
+                'cost_unit', i.cost_unit,
+                'base_unit', i.base_unit,
+                'conversion_factor', i.conversion_factor,
+                'cost_total', i.cost_total,
+                'created_at', i.created_at
+              )
+            ) FILTER (WHERE i.input_id IS NOT NULL), 
+            '[]'
+          ) as inputs
         FROM activity a
         LEFT JOIN input_used i ON a.activity_id = i.activity_id
         WHERE a.activity_id = $1 AND a.user_id = $2
