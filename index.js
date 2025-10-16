@@ -1,12 +1,15 @@
 import { config } from './config.js'
-import { httpServer } from './src/server.js'
+import { httpsServer } from './src/server.js'
 
 async function startServer () {
-  // Conectar nuestra base de datos
+  // Conectar nuestra base de datos (si tienes conexión a BD)
 
-  // Iniciar el servidor HTTP
-  await new Promise((resolve) => httpServer.listen({ port: config.port }, resolve))
-  console.log(`Servidor HTTP corriendo en http://localhost:${config.port}`)
+  // Iniciar el servidor HTTPS
+  await new Promise((resolve) => httpsServer.listen(config.port, resolve))
+
+  console.log(`🔐  Servidor HTTPS: https://localhost:${config.port}`)
+  console.log(`📚 Documentación de la API disponible en: ${config.docs.urlDocs}`)
+  console.log('🌐 Frontend recomendado: https://localhost:3000')
 }
 
 startServer()
