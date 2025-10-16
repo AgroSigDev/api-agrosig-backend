@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
+import https from 'https'  // <- NUEVO
 import http from 'http'
+import fs from 'fs'        // <- NUEVO
 import { setupSwagger } from '../swagger.config.js'
 import { config } from '../config.js'
 import userRouter from './routes/users/users.routes.js'
@@ -17,13 +19,30 @@ import { fileURLToPath } from 'url'
 
 const app = express()
 
-// Configuracion del servidor http
-const httpServer = http.createServer(app)
+// Leer certificados SSL <- NUEVO
+const sslOptions = {
+  key: fs.readFileSync('./key.pem'),
+  cert: fs.readFileSync('./cert.pem')
+}
+
+// Configuración del servidor HTTPS <- MODIFICADO
+const httpsServer = https.createServer(sslOptions, app)
+
+// Servidor HTTP para redirección (opcional) <- NUEVO
+const httpServer = http.createServer((req, res) => {
+  res.writeHead(301, {
+    "Location": "https://" + req.headers['host'] + req.url
+  })
+  res.end()
+})
 
 // Middlewares
 app.use(express.json())
-app.use(cors()) // Permitir solicitudes desde cualquier origen
-app.use(express.urlencoded({ extended: true })) // Permitir el análisis de datos de formularios
+app.use(cors({
+  origin: ['https://localhost:3000', 'http://localhost:3000'], // <- MEJORADO
+  credentials: true
+}))
+app.use(express.urlencoded({ extended: true }))
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -55,8 +74,20 @@ app.get('/', (request, response) => {
         userGit: '@davidch'
       }
     ],
-    documentation: `${config.docs.baseUrl || 'http://localhost:' + config.port}/api-docs`
+    documentation: `${config.docs.baseUrl || 'https://localhost:4000'}/api-docs` // <- Cambiado a HTTPS
   })
 })
 
-export { httpServer }
+// Iniciar servidores <- NUEVO
+const HTTPS_PORT = 4000
+const HTTP_PORT = 4001
+
+httpsServer.listen(HTTPS_PORT, () => {
+  console.log(`🚀 Backend con SSL en https://localhost:${HTTPS_PORT}`)
+})
+
+httpServer.listen(HTTP_PORT, () => {
+  console.log(`🔁 Redirección HTTP → HTTPS en http://localhost:${HTTP_PORT}`)
+})
+
+export { httpsServer, httpServer }
