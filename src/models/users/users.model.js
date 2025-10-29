@@ -74,12 +74,6 @@ async function updateUserById (userId, userData) {
       throw new Error('User not found')
     }
 
-    const existingEmail = await getUserByEmail(userData.email)
-
-    if (existingEmail) {
-      throw new Error('Email already exists')
-    }
-
     const query = {
       text: 'UPDATE users SET first_name = $1, paternal_surname = $2, maternal_surname = $3, email = $4 WHERE user_id = $5 RETURNING *',
       values: [userData.first_name, userData.paternal_surname, userData.maternal_surname, userData.email, userId]

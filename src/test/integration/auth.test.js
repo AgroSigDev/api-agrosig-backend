@@ -1,6 +1,12 @@
 import request from 'supertest'
-import { httpServer } from '../../server.js'
+import { httpsServer } from '../../server.js'
 import { pool } from '../../lib/db.js'
+
+// Crear un agente personalizado que acepte certificados auto-firmados
+const agent = request.agent(httpsServer, {
+  ca: [], // Ignorar verificación de CA
+  rejectUnauthorized: false // Aceptar certificados auto-firmados
+})
 
 describe('🔐 AUTH Endpoints', () => {
   // Antes de las pruebas, limpiar usuarios de prueba
@@ -13,6 +19,7 @@ describe('🔐 AUTH Endpoints', () => {
     // Limpiar después de todas las pruebas
     await pool.query("DELETE FROM users WHERE email LIKE '%test%' OR email = 'david@example.com'")
     await pool.end()
+    httpsServer.close() // Cerrar el servidor HTTPS
   })
 
   describe('🧩 POST /auth/register', () => {
@@ -25,7 +32,7 @@ describe('🔐 AUTH Endpoints', () => {
         password: 'password123'
       }
 
-      const res = await request(httpServer)
+      const res = await agent
         .post('/auth/register')
         .send(userData)
 
@@ -46,7 +53,7 @@ describe('🔐 AUTH Endpoints', () => {
         password: 'password123'
       }
 
-      const res = await request(httpServer)
+      const res = await agent
         .post('/auth/register')
         .send(userData)
 
@@ -57,7 +64,7 @@ describe('🔐 AUTH Endpoints', () => {
 
   describe('🔑 POST /auth/login', () => {
     it('✅ Debe iniciar sesión correctamente con credenciales válidas', async () => {
-      const res = await request(httpServer)
+      const res = await agent
         .post('/auth/login')
         .send({
           email: 'david.test@example.com',
@@ -73,7 +80,7 @@ describe('🔐 AUTH Endpoints', () => {
     })
 
     it('🚫 No debe iniciar sesión con contraseña incorrecta', async () => {
-      const res = await request(httpServer)
+      const res = await agent
         .post('/auth/login')
         .send({
           email: 'david.test@example.com',
@@ -85,7 +92,7 @@ describe('🔐 AUTH Endpoints', () => {
     })
 
     it('🚫 No debe iniciar sesión con usuario no registrado', async () => {
-      const res = await request(httpServer)
+      const res = await agent
         .post('/auth/login')
         .send({
           email: 'noexiste@example.com',

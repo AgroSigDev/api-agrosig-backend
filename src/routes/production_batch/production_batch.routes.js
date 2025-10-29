@@ -1,5 +1,5 @@
 import express from 'express'
-import { createProductionBatch, getProductionBatches, getProductionDetail, associateActivities, getAvaliableActivities, getBatchActivities } from '../../controllers/index.js'
+import { createProductionBatch, getProductionBatches, getProductionDetail, associateActivities, getAvaliableActivities, getBatchActivities, generateQRCode, getTraceabilityByCode } from '../../controllers/index.js'
 import { autenticate } from '../../middlewares/index.js'
 
 const router = express.Router()
@@ -131,6 +131,47 @@ router.get('/activities/:productionId', autenticate, async (request, response, n
     response.status(500).json({
       success: false,
       message: 'Error getting batch activities',
+      error: error.message
+    })
+  }
+})
+
+// GET /production/traceability/:uniqueCode
+router.get('/traceability/:uniqueCode', async (request, response, next) => {
+  try {
+    const uniqueCode = request.params.uniqueCode
+    const result = await getTraceabilityByCode(uniqueCode)
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    console.log('Error getting traceability by code: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error getting traceability by code',
+      error: error.message
+    })
+  }
+})
+
+// POST /production/generate-qr/:productionId
+router.post('/generate-qr/:productionId', autenticate, async (request, response, next) => {
+  try {
+    const userId = request.user.user_id
+    const productionId = request.params.productionId
+
+    const result = await generateQRCode(userId, productionId)
+    response.status(200).json({
+      success: true,
+      message: 'QR code generated successfully',
+      data: result
+    })
+  } catch (error) {
+    console.log('Error generating QR code: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error generating QR code',
       error: error.message
     })
   }

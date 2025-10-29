@@ -10,7 +10,13 @@ async function loginUser (user) {
   return data
 }
 
+async function logoutUser (refreshToken) {
+  const data = await Auth.logoutUser(refreshToken)
+  return data
+}
+
 export {
   registerUser,
-  loginUser
+  loginUser,
+  logoutUser
 }
