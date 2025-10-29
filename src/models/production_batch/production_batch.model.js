@@ -174,7 +174,7 @@ async function associateActivitiesToBatch (userId, productionId, activityIds) {
       associatedActivities.push(result.rows[0])
     }
 
-    // 5. Update QR code to reflect new activities
+    // 5. Update QR code to reflect new activities - ESTA ES LA PARTE IMPORTANTE
     const qrUpdate = await updateBatchQRCode(productionId, client)
 
     await client.query('COMMIT')
@@ -185,7 +185,7 @@ async function associateActivitiesToBatch (userId, productionId, activityIds) {
       production_id: productionId,
       associated_count: associatedActivities.length,
       activities: associatedActivities,
-      qrUpdate: true,
+      qr_updated: true,
       new_qr: qrUpdate,
       previous_activity_count: deleteResult.rows.length
     }
@@ -230,7 +230,7 @@ async function validateActivitiesCropOwnership (activityIds, cropId) {
   }
 }
 
-async function updateBatchQRCode (productionId) {
+async function updateBatchQRCode (productionId, client = pool) {
   try {
     const batchInfo = await getBatchInfo(productionId)
 
@@ -238,44 +238,51 @@ async function updateBatchQRCode (productionId) {
       throw new Error('Production batch not found')
     }
 
-    const qrUrl = `${config.appUrl || 'http://localhost:4000'}/trazabilidad/${batchInfo.unique_code}`
+    // Generar URL para el QR
+    const qrUrl = `${config.appUrl}/trazabilidad/${batchInfo.unique_code}`
 
+    // Generar QR code con la URL
     const newQRCode = await generateQRCodeDataURL(qrUrl, {
       width: 400,
       margin: 3,
       darkColor: '#1a365d',
-      errorCorrectionLevel: 'Q'
+      errorCorrectionLevel: 'H'
     })
+
+    const qrData = {
+      production_id: productionId,
+      unique_code: batchInfo.unique_code,
+      batch_name: batchInfo.name,
+      crop_type: batchInfo.crop_type,
+      activity_count: batchInfo.activity_count,
+      last_activity_date: batchInfo.last_activity_date,
+      timestamp: new Date().toISOString()
+    }
 
     const updateQuery = {
       text: `UPDATE qr_lote 
              SET qr_code = $1, 
-                 generation_date = CURRENT_TIMESTAMP
-             WHERE production_id = $2 
+                 generation_date = CURRENT_TIMESTAMP,
+                 qr_data = $2
+             WHERE production_id = $3 
              RETURNING *`,
-      values: [newQRCode, productionId]
+      values: [newQRCode, qrData, productionId]
     }
-    const updateResult = await pool.query(updateQuery)
+
+    const updateResult = await client.query(updateQuery)
 
     if (updateResult.rowCount === 0) {
       const insertQuery = {
-        text: `INSERT INTO qr_lote (production_id, qr_code) 
-               VALUES ($1, $2) 
+        text: `INSERT INTO qr_lote (production_id, qr_code, qr_data) 
+               VALUES ($1, $2, $3) 
                RETURNING *`,
-        values: [productionId, newQRCode]
+        values: [productionId, newQRCode, qrData]
       }
-      await pool.query(insertQuery)
+      const insertResult = await client.query(insertQuery)
+      return insertResult.rows[0]
     }
 
-    return {
-      qr_code: newQRCode,
-      qr_url: qrUrl,
-      generation_date: new Date().toISOString(),
-      activity_count: parseInt(batchInfo.activity_count || 0),
-      last_activity_date: batchInfo.last_activity_date,
-      batch_name: batchInfo.name,
-      crop_type: batchInfo.crop_type
-    }
+    return updateResult.rows[0]
   } catch (error) {
     console.error('Error updating batch QR code:', error)
     throw error
@@ -378,6 +385,108 @@ async function getBatchInfo (productionId) {
   }
 }
 
+async function getTraceabilityByUniqueCode (uniqueCode) {
+  try {
+    // 1. Get basic batch information
+    const batchQuery = {
+      text: `SELECT pb.production_id, pb.name as batch_name, pb.creation_date,
+                    pb.unique_code, c.crop_type, c.crop_variety, 
+                    c.planting_date, c.harvest_date,
+                    u.first_name, u.paternal_surname, u.maternal_surname,
+                    p.plot_name, p.location,
+                    COUNT(ab.activity_id) as total_activities,
+                    MAX(a.date) as last_activity_date
+             FROM production_batch pb
+             JOIN crop c ON pb.crop_id = c.crop_id
+             JOIN users u ON c.user_id = u.user_id
+             JOIN plots p ON c.plot_id = p.plot_id
+             LEFT JOIN activity_branch ab ON pb.production_id = ab.production_id
+             LEFT JOIN activity a ON ab.activity_id = a.activity_id
+             WHERE pb.unique_code = $1 AND pb.is_active = true
+             GROUP BY pb.production_id, pb.name, pb.creation_date, pb.unique_code,
+                      c.crop_type, c.crop_variety, c.planting_date, c.harvest_date,
+                      u.first_name, u.paternal_surname, u.maternal_surname,
+                      p.plot_name, p.location`,
+      values: [uniqueCode]
+    }
+
+    const batchResult = await pool.query(batchQuery)
+
+    if (batchResult.rows.length === 0) {
+      throw new Error('Código de trazabilidad no encontrado')
+    }
+
+    const batch = batchResult.rows[0]
+
+    // 2. Get activities with their inputs
+    const activitiesQuery = {
+      text: `SELECT a.activity_id, a.activity_type, a.date, a.description,
+                    a.cost_total, a.created_at,
+                    json_agg(
+                      json_build_object(
+                        'input_name', iu.input_name,
+                        'quantity', iu.quantity,
+                        'unit', iu.unit,
+                        'unit_cost', iu.unit_cost,
+                        'cost_total', iu.cost_total
+                      ) 
+                    ) as inputs
+             FROM activity_branch ab
+             JOIN activity a ON ab.activity_id = a.activity_id
+             LEFT JOIN input_used iu ON a.activity_id = iu.activity_id
+             WHERE ab.production_id = $1
+             GROUP BY a.activity_id, a.activity_type, a.date, a.description, 
+                      a.cost_total, a.created_at
+             ORDER BY a.date ASC`,
+      values: [batch.production_id]
+    }
+
+    const activitiesResult = await pool.query(activitiesQuery)
+    const activities = activitiesResult.rows
+
+    // 3. Calculate total costs
+    const totalBatchCost = activities.reduce((total, activity) => {
+      return total + parseFloat(activity.cost_total || 0)
+    }, 0)
+
+    const hasActivities = activities.length > 0
+
+    return {
+      batch_info: {
+        name: batch.batch_name,
+        unique_code: batch.unique_code,
+        creation_date: batch.creation_date,
+        production_id: batch.production_id
+      },
+      crop_info: {
+        type: batch.crop_type,
+        variety: batch.crop_variety,
+        planting_date: batch.planting_date,
+        harvest_date: batch.harvest_date
+      },
+      producer_info: {
+        name: `${batch.first_name} ${batch.paternal_surname} ${batch.maternal_surname}`.trim(),
+        plot: batch.plot_name,
+        location: batch.location
+      },
+      activities,
+      summary: {
+        has_activities: hasActivities,
+        total_activities: parseInt(batch.total_activities || 0),
+        total_batch_cost: totalBatchCost,
+        last_activity_date: batch.last_activity_date,
+        qr_scanned_at: new Date().toISOString()
+      },
+      message: hasActivities
+        ? `Trazabilidad completa - ${batch.total_activities} actividades registradas`
+        : 'Este lote no tiene actividades asociadas. La trazabilidad estará disponible cuando se agreguen actividades.'
+    }
+  } catch (error) {
+    console.error('Error obteniendo trazabilidad:', error)
+    throw error
+  }
+}
+
 export const productionBatch = {
   createProductionBatch,
   validateCropByUserId,
@@ -390,5 +499,6 @@ export const productionBatch = {
   updateBatchQRCode,
   getAvaliableActivitiesForBatch,
   getBatchActivities,
-  getBatchInfo
+  getBatchInfo,
+  getTraceabilityByUniqueCode
 }

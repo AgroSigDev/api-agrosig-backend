@@ -120,6 +120,8 @@ async function loginUser (user) {
   const token = generateAuthToken(foundUser)
   const refreshToken = generateRefreshToken(foundUser)
 
+  await saveRefreshToken(foundUser.user_id, refreshToken)
+
   return {
     user: foundUser,
     token,
@@ -150,8 +152,64 @@ async function getUserByEmail (email) {
     throw error
   }
 }
+
+/**
+ * Guarda un refresh token en la base de datos.
+ */
+async function saveRefreshToken (userId, refreshToken) {
+  const query = {
+    text: 'INSERT INTO tokens (user_id, refresh_token) VALUES ($1, $2)',
+    values: [userId, refreshToken]
+  }
+  await pool.query(query)
+}
+
+/**
+ * Revoca (invalida) un refresh token en la base de datos.
+ */
+async function revokeRefreshToken (refreshToken) {
+  const query = {
+    text: 'UPDATE tokens SET is_revoked = true WHERE refresh_token = $1',
+    values: [refreshToken]
+  }
+  await pool.query(query)
+}
+
+/**
+ * Verifica si un refresh token fue revocado.
+ */
+async function isRefreshTokenRevoked (refreshToken) {
+  const query = {
+    text: 'SELECT is_revoked FROM tokens WHERE refresh_token = $1',
+    values: [refreshToken]
+  }
+  const result = await pool.query(query)
+  return result.rows.length > 0 && result.rows[0].is_revoked === true
+}
+
+/**
+ * Cierra sesión revocando el refresh token
+ */
+async function logoutUser (refreshToken) {
+  await revokeRefreshToken(refreshToken)
+  return { message: 'Logout successful. Tokens revoked.' }
+}
+
+/**
+ * Verifica si un refresh token es válido y no está revocado
+ */
+async function validateRefreshToken (refreshToken) {
+  const revoked = await isRefreshTokenRevoked(refreshToken)
+  if (revoked) throw new Error('Refresh token has been revoked')
+}
+
 export const Auth = {
   registerUser,
   loginUser,
-  getUserByEmail
+  getUserByEmail,
+  saveRefreshToken,
+  revokeRefreshToken,
+  isRefreshTokenRevoked,
+  logoutUser,
+  validateRefreshToken
 }

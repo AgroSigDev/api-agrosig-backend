@@ -4,7 +4,7 @@ import { httpsServer } from './src/server.js'
 async function startServer () {
   // Conectar nuestra base de datos (si tienes conexión a BD)
 
-  // Iniciar el servidor HTTPS
+  // Iniciar el servidor HTTPS en todas las interfaces
   await new Promise((resolve) => httpsServer.listen(config.port, resolve))
 
   console.log(`🔐  Servidor HTTPS: https://localhost:${config.port}`)

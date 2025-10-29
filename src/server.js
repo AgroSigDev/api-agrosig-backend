@@ -32,7 +32,9 @@ app.use(express.json())
 app.use(cors({
   origin: [
     'https://localhost:3000',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://192.168.1.152:4000',
+    'http://192.168.1.152:4000'
   ],
   credentials: true
 }))
@@ -44,7 +46,7 @@ const __dirname = path.dirname(__filename)
 // Configuracion de Swagger
 setupSwagger(app)
 
-app.use('/images', express.static(path.join(__dirname, 'src/uploads/profile')))
+app.use('/uploads/profile', express.static(path.join(__dirname, 'uploads/profile')))
 
 // Rutas - Endpoints
 app.use('/users', userRouter)

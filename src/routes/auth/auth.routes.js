@@ -1,5 +1,5 @@
 import express from 'express'
-import { registerUser, loginUser } from '../../controllers/index.js'
+import { registerUser, loginUser, logoutUser } from '../../controllers/index.js'
 import { uploadProfile } from '../../helpers/index.js'
 
 const router = express.Router()
@@ -47,6 +47,33 @@ router.post('/login', async (request, response, next) => {
     response.status(500).json({
       success: false,
       message: 'Error logging in user',
+      error: error.message
+    })
+  }
+})
+
+// POST /auth/logout
+router.post('/logout', async (request, response) => {
+  try {
+    const refreshToken = request.headers['x-refresh-token']
+
+    if (!refreshToken) {
+      return response.status(400).json({
+        success: false,
+        message: 'Missing refresh token in headers'
+      })
+    }
+
+    await logoutUser(refreshToken)
+    response.status(200).json({
+      success: true,
+      message: 'Logout successful. Tokens invalidated.'
+    })
+  } catch (error) {
+    console.error('Error logging out user:', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error logging out user',
       error: error.message
     })
   }

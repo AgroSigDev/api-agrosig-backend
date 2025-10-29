@@ -8,7 +8,7 @@ import { uploadProfile } from '../../helpers/index.js'
 const router = express.Router()
 
 // GET /users/:id
-router.get('/get-user/:id', autenticate, authorize(['admin']), async (request, response, next) => {
+router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
   try {
     const userId = request.params.id
     const result = await getUserById(userId)
@@ -28,7 +28,7 @@ router.get('/get-user/:id', autenticate, authorize(['admin']), async (request, r
 })
 
 // GET /users
-router.get('/', autenticate, async (request, response, next) => {
+router.get('/', autenticate, authorize(['admin']), async (request, response, next) => {
   try {
     const result = await getAllUsers()
     response.status(200).json({
@@ -41,7 +41,7 @@ router.get('/', autenticate, async (request, response, next) => {
 })
 
 // PATCH /users/:id
-router.patch('/:id', autenticate, async (request, response, next) => {
+router.patch('/update-profile/:id', autenticate, async (request, response, next) => {
   try {
     const userId = request.params.id
     const userData = request.body
@@ -56,7 +56,7 @@ router.patch('/:id', autenticate, async (request, response, next) => {
 })
 
 // PATCH /users/:id/password
-router.patch('/password/:id', autenticate, async (request, response, next) => {
+router.patch('/update-password/:id', autenticate, async (request, response, next) => {
   try {
     const userId = request.params.id
     const { oldPassword, newPassword, repeatedPassword } = request.body
@@ -89,15 +89,15 @@ router.patch('/image/:id', autenticate, uploadProfile, async (request, response,
       throw new Error('No se ha proporcionado ninguna imagen')
     }
 
-    // Obtener la ruta de la imagen subida
-    const imagePath = request.file.path
+    // Obtener solo el nombre del archivo para almacenar en BD
+    const imageFileName = request.file.filename
 
     // Llamar al controlador (que pasará al modelo)
-    const updatedUser = await updateImageUserById(userId, imagePath)
+    const updatedUser = await updateImageUserById(userId, imageFileName)
 
     // Eliminar la imagen anterior si existe
     if (updatedUser.oldImagePath) {
-      const fullPath = path.join(process.cwd(), updatedUser.oldImagePath)
+      const fullPath = path.join(process.cwd(), 'src/uploads/profile', updatedUser.oldImagePath)
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath)
       }
@@ -107,13 +107,16 @@ router.patch('/image/:id', autenticate, uploadProfile, async (request, response,
       success: true,
       message: 'Imagen de usuario actualizada correctamente',
       data: {
-        imageUrl: `/uploads/profile/${path.basename(imagePath)}`
+        imageUrl: `/uploads/profile/${imageFileName}`
       }
     })
   } catch (error) {
     // Eliminar la imagen recién subida si hay error
     if (request.file) {
-      fs.unlinkSync(request.file.path)
+      const fullPath = path.join(process.cwd(), request.file.path)
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath)
+      }
     }
 
     console.error('Error al actualizar imagen:', error)

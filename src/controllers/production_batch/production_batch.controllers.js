@@ -54,11 +54,23 @@ async function getBatchActivities (userId, productionId) {
   return data
 }
 
+async function generateQRCode (userId, productionId) {
+  const data = await productionBatch.updateBatchQRCode(productionId)
+  return data
+}
+
+async function getTraceabilityByCode (uniqueCode) {
+  const data = await productionBatch.getTraceabilityByUniqueCode(uniqueCode)
+  return data
+}
+
 export {
   createProductionBatch,
   getProductionBatches,
   getProductionDetail,
   associateActivities,
   getAvaliableActivities,
-  getBatchActivities
+  getBatchActivities,
+  generateQRCode,
+  getTraceabilityByCode
 }
