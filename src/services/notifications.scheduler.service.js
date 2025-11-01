@@ -18,6 +18,8 @@ class NotificationScheduler {
       console.log(`[${new Date().toISOString()}] 📅 Ejecutando recordatorios de actividades`)
       await this.safeExecute(this.sendActivityReminders.bind(this))
     })
+    // cron.schedule('* * * * *', this.sendWeatherNotifications.bind(this)) // Cada minuto
+    // cron.schedule('* * * * *', this.sendActivityReminders.bind(this))
   }
 
   /**

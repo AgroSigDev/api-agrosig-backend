@@ -10,7 +10,7 @@ const router = express.Router()
 // GET /users/:id
 router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
   try {
-    const userId = request.params.id
+    const userId = request.user.user_id
     const result = await getUserById(userId)
     if (!result) {
       return response.status(404).json({
@@ -43,7 +43,7 @@ router.get('/', autenticate, authorize(['admin']), async (request, response, nex
 // PATCH /users/:id
 router.patch('/update-profile/:id', autenticate, async (request, response, next) => {
   try {
-    const userId = request.params.id
+    const userId = request.user.user_id
     const userData = request.body
     const result = await updateUserById(userId, userData)
     response.status(200).json({
@@ -58,7 +58,7 @@ router.patch('/update-profile/:id', autenticate, async (request, response, next)
 // PATCH /users/:id/password
 router.patch('/update-password/:id', autenticate, async (request, response, next) => {
   try {
-    const userId = request.params.id
+    const userId = request.user.user_id
     const { oldPassword, newPassword, repeatedPassword } = request.body
 
     const result = await updateUserPassword(
@@ -82,7 +82,7 @@ router.patch('/update-password/:id', autenticate, async (request, response, next
 // PATCH /users/image/:id
 router.patch('/image/:id', autenticate, uploadProfile, async (request, response, next) => {
   try {
-    const userId = request.params.id
+    const userId = request.user.user_id
 
     // Verificar que se subió un archivo
     if (!request.file) {
@@ -131,7 +131,7 @@ router.patch('/image/:id', autenticate, uploadProfile, async (request, response,
 // DELETE /users/:id
 router.delete('/:id', autenticate, async (request, response, next) => {
   try {
-    const userId = request.params.id
+    const userId = request.user.user_id
     await deleteUserById(userId)
     response.status(204).json({
       success: true,

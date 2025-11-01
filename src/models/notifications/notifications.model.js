@@ -34,7 +34,8 @@ async function getNotificationsByUserId (userId, limit = 20, offset = 0, unreadO
 
     if (unreadOnly) {
       paramCount++
-      query += ' AND is_read = false'
+      query += ` AND is_read = $${paramCount}`
+      values.push(false)
     }
 
     query += ` ORDER BY sent_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`
