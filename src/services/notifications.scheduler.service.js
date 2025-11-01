@@ -7,23 +7,17 @@ class NotificationScheduler {
    * Inicia las tareas programadas del sistema.
    */
   startSchedulers () {
-    console.log('Iniciando planificador de notificaciones...')
-
     // Clima: todos los días a las 7:00 AM
-    /* cron.schedule('0 7 * * *', async () => {
+    cron.schedule('0 7 * * *', async () => {
       console.log(`[${new Date().toISOString()}] 🔔 Ejecutando notificaciones del clima`)
       await this.safeExecute(this.sendWeatherNotifications.bind(this))
-    }) */
+    })
 
     // Actividades: todos los días a las 8:00 AM
-    /* cron.schedule('0 8 * * *', async () => {
+    cron.schedule('0 8 * * *', async () => {
       console.log(`[${new Date().toISOString()}] 📅 Ejecutando recordatorios de actividades`)
       await this.safeExecute(this.sendActivityReminders.bind(this))
-    }) */
-
-    // Para pruebas: ejecutar cada minuto en lugar de horarios fijos
-    cron.schedule('* * * * *', this.sendWeatherNotifications.bind(this)) // Cada minuto
-    cron.schedule('* * * * *', this.sendActivityReminders.bind(this))
+    })
   }
 
   /**
