@@ -13,6 +13,9 @@ import activityRouter from './routes/activitys/activity.routes.js'
 import reportRouter from './routes/report/report.routes.js'
 import productionRouter from './routes/production_batch/production_batch.routes.js'
 import commentRouter from './routes/chat/chat.route.js'
+import fcmRouter from './routes/fcm/fcm.routes.js'
+import notificationService from './routes/notifications/notifications.routes.js'
+import notificationsSchedulerService from './services/notifications.scheduler.service.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -27,14 +30,18 @@ const sslOptions = {
 // Configuración del servidor HTTPS
 const httpsServer = https.createServer(sslOptions, app)
 
+// Iniciar el servicio de notificaciones programadas
+notificationsSchedulerService.startSchedulers()
+console.log('🔔 Servicio de notificaciones programadas iniciado.', notificationsSchedulerService.startSchedulers)
+
 // Middlewares
 app.use(express.json())
 app.use(cors({
   origin: [
     'https://localhost:3000',
     'http://localhost:3000',
-    'https://192.168.1.152:4000',
-    'http://192.168.1.152:4000'
+    'https://192.168.34.101:4000',
+    'http://192.168.34.101:4000'
   ],
   credentials: true
 }))
@@ -58,6 +65,8 @@ app.use('/activity', activityRouter)
 app.use('/report', reportRouter)
 app.use('/production', productionRouter)
 app.use('/comment', commentRouter)
+app.use('/fcm', fcmRouter)
+app.use('/notifications', notificationService)
 
 // Ruta Raiz
 app.get('/', (request, response) => {
