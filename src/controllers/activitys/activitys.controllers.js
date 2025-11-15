@@ -15,8 +15,14 @@ async function getActivity (userId, activityId) {
   return activity
 }
 
+async function getAllActivities (userId) {
+  const activities = await Activitys.getAllActivitiesByUser(userId)
+  return activities
+}
+
 export {
   registerActivity,
   getActivities,
-  getActivity
+  getActivity,
+  getAllActivities
 }

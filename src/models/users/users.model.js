@@ -41,7 +41,23 @@ async function getUserById (userId) {
 async function getAllUsers () {
   try {
     const query = {
-      text: 'SELECT * FROM users'
+      text: `
+        SELECT 
+          u.user_id,
+          u.first_name,
+          u.paternal_surname,
+          u.maternal_surname,
+          u.email,
+          u.image_user,
+          u.is_active,
+          u.role_id,
+          u.created_at,
+          u.updated_at,
+          r.name as role_name
+        FROM users u
+        JOIN role r ON u.role_id = r.role_id
+        ORDER BY u.created_at DESC
+      `
     }
     const result = await pool.query(query)
     return result.rows

@@ -123,7 +123,19 @@ async function loginUser (user) {
   await saveRefreshToken(foundUser.user_id, refreshToken)
 
   return {
-    user: foundUser,
+    user: {
+      user_id: foundUser.user_id,
+      role_id: foundUser.role_id, //  Asegurar que role_id esté incluido
+      first_name: foundUser.first_name,
+      paternal_surname: foundUser.paternal_surname,
+      maternal_surname: foundUser.maternal_surname,
+      email: foundUser.email,
+      image_user: foundUser.image_user,
+      configured_plot: foundUser.configured_plot,
+      is_active: foundUser.is_active,
+      created_at: foundUser.created_at,
+      updated_at: foundUser.updated_at
+    },
     token,
     refreshToken
   }

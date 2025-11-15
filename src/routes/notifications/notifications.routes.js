@@ -141,7 +141,7 @@ router.put('/read-all', autenticate, authorize(['admin']), async (request, respo
 router.post('/test/weather', autenticate, authorize(['admin']), async (request, response, next) => {
   try {
     await NotificationScheduler.sendWeatherNotifications()
-    request.status(200).json({
+    response.status(200).json({
       success: true,
       message: 'Notificaciones de clima ejecutadas manualmente'
     })
