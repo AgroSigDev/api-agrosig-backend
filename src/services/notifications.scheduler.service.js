@@ -39,36 +39,56 @@ class NotificationScheduler {
   async sendWeatherNotifications () {
     try {
       const query = `
-        SELECT DISTINCT u.user_id, u.email, pc.city_name, pc.temperature, 
-               pc.humidity, pc.description, pc.min_temp, pc.max_temp
-        FROM users u
-        JOIN plots p ON u.user_id = p.user_id
-        JOIN plot_climate pc ON p.plot_id = pc.plot_id
-        WHERE u.is_active = true 
-          AND pc.date = CURRENT_DATE
-          AND u.configured_plot = true
+        SELECT DISTINCT 
+        u.user_id, 
+        u.email, 
+        pc.city_name, 
+        pc.temperature, 
+        pc.humidity, 
+        pc.description, 
+        pc.min_temp, 
+        pc.max_temp,
+        COUNT(uf.fcm_token) as token_count
+      FROM users u
+      JOIN plots p ON u.user_id = p.user_id
+      JOIN plot_climate pc ON p.plot_id = pc.plot_id
+      LEFT JOIN user_fcm_tokens uf ON u.user_id = uf.user_id
+      WHERE u.is_active = true 
+        AND pc.date = CURRENT_DATE
+        AND u.configured_plot = true
+      GROUP BY u.user_id, u.email, pc.city_name, pc.temperature, pc.humidity, 
+               pc.description, pc.min_temp, pc.max_temp
+      HAVING COUNT(uf.fcm_token) > 0
       `
 
       const { rows } = await pool.query(query)
       console.log(`🌤️ Usuarios a notificar por clima: ${rows.length}`)
 
+      let successCount = 0
+      let errorCount = 0
+
       for (const row of rows) {
-        if (!row.user_id || !row.city_name) continue
+        try {
+          const title = `🌤️ Clima en ${row.city_name || 'tu parcela'}`
+          const body = `Hoy: ${row.description || 'Sin descripción'}. Temp: ${row.temperature}°C (Max: ${row.max_temp}°C, Min: ${row.min_temp}°C). Humedad: ${row.humidity}%`
 
-        const title = `🌤️ Clima en ${row.city_name}`
-        const body = `Hoy: ${row.description}. Temp: ${row.temperature}°C (Max: ${row.max_temp}°C, Min: ${row.min_temp}°C). Humedad: ${row.humidity}%`
+          await FirebaseService.sendToUser(row.user_id, title, body, {
+            type: 'weather',
+            city: String(row.city_name || ''),
+            temperature: String(row.temperature || ''),
+            humidity: String(row.humidity || ''),
+            min_temp: String(row.min_temp || ''),
+            max_temp: String(row.max_temp || ''),
+            timestamp: new Date().toISOString()
+          })
 
-        await FirebaseService.sendToUser(row.user_id, title, body, {
-          type: 'weather',
-          city: String(row.city_name || ''),
-          temperature: String(row.temperature || ''),
-          humidity: String(row.humidity || ''),
-          min_temp: String(row.min_temp || ''),
-          max_temp: String(row.max_temp || ''),
-          timestamp: new Date().toISOString()
-        })
-
-        await this.logNotification(row.user_id, 'weather', title, body)
+          await this.logNotification(row.user_id, 'weather', title, body)
+          successCount++
+        } catch (error) {
+          console.error(`Error notificando usuario ${row.user_id}:`, error)
+          errorCount++
+        }
+        console.log(`Notificaciones de clima: ${successCount} exitosas, ${errorCount} errores`)
       }
     } catch (error) {
       console.error('Error en notificaciones de clima:', error)

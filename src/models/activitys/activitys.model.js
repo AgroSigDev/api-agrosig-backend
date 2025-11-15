@@ -271,6 +271,56 @@ async function getActivityById (userId, activityId) {
   }
 }
 
+async function getAllActivitiesByUser (userId) {
+  try {
+    const query = {
+      text: `
+        SELECT 
+          a.activity_id,
+          a.crop_id,
+          c.crop_type,
+          a.user_id,
+          a.activity_type,
+          a.date,
+          a.description,
+          a.cost_total,
+          a.created_at,
+          a.updated_at,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'input_id', i.input_id,
+                'input_name', i.input_name,
+                'unit', i.unit,
+                'quantity', i.quantity,
+                'unit_cost', i.unit_cost,
+                'cost_unit', i.cost_unit,
+                'base_unit', i.base_unit,
+                'conversion_factor', i.conversion_factor,
+                'cost_total', i.cost_total,
+                'created_at', i.created_at
+              )
+            ) FILTER (WHERE i.input_id IS NOT NULL), 
+            '[]'
+          ) as inputs
+        FROM activity a
+        LEFT JOIN input_used i ON a.activity_id = i.activity_id
+        LEFT JOIN crop c ON a.crop_id = c.crop_id
+        WHERE a.user_id = $1
+        GROUP BY a.activity_id, c.crop_type
+        ORDER BY a.date DESC, a.created_at DESC
+      `,
+      values: [userId]
+    }
+
+    const result = await pool.query(query)
+    return result.rows
+  } catch (error) {
+    console.error('Error getting all user activities: ', error)
+    throw error
+  }
+}
+
 async function deleteActivity (userId, activityId) {
   const client = await pool.connect()
 
@@ -316,6 +366,7 @@ export const Activitys = {
   createActivityWithInputs,
   getActivitiesByCrop,
   getActivityById,
+  getAllActivitiesByUser,
   deleteActivity,
   getCropById: (userId, cropId) => getCropById(pool, userId, cropId),
   calculateActivityTotal: (activityId) => calculateActivityTotal(pool, activityId),

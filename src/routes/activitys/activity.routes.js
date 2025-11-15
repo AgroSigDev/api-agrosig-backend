@@ -1,10 +1,31 @@
 import express from 'express'
-import { registerActivity, getActivities, getActivity } from '../../controllers/index.js'
+import { registerActivity, getActivities, getActivity, getAllActivities } from '../../controllers/index.js'
 import { autenticate } from '../../middlewares/index.js'
 
 const router = express.Router()
 
-// GET /activities/crop/:cropId
+// GET /activity/all
+router.get('/all', autenticate, async (request, response) => {
+  try {
+    const userId = request.user.user_id
+    const activities = await getAllActivities(userId)
+
+    response.status(201).json({
+      success: true,
+      message: 'All activities retrieved successfully',
+      data: activities
+    })
+  } catch (error) {
+    console.log('Error getting all activities: ', error)
+    response.status(500).json({
+      success: false,
+      message: 'Error retrieving all activities',
+      error: error.message
+    })
+  }
+})
+
+// GET /activity/crop/:cropId
 router.get('/crop/:cropId', autenticate, async (request, response) => {
   try {
     const userId = request.user.user_id
@@ -27,7 +48,7 @@ router.get('/crop/:cropId', autenticate, async (request, response) => {
   }
 })
 
-// GET /activities/:activityId
+// GET /activity/:activityId
 router.get('/:activityId', autenticate, async (request, response) => {
   try {
     const userId = request.user.user_id
@@ -37,7 +58,7 @@ router.get('/:activityId', autenticate, async (request, response) => {
 
     response.status(201).json({
       success: true,
-      message: 'Activity created successfully',
+      message: 'Getting Activity successfully',
       data: activities
     })
   } catch (error) {
