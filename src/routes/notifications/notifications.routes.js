@@ -158,7 +158,7 @@ router.post('/test/weather', autenticate, authorize(['admin']), async (request, 
 router.post('/test/activities', autenticate, authorize(['admin']), async (request, response, next) => {
   try {
     await NotificationScheduler.sendActivityReminders()
-    request.status(200).json({
+    response.status(200).json({
       success: true,
       message: 'Recordatorios de actividades ejecutados manualmente'
     })
