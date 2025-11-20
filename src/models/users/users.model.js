@@ -218,6 +218,31 @@ async function getUserByEmail (email) {
 }
 
 /**
+ * Updates the active status of a user by their user ID.
+ *
+ * @async
+ * @function updateStatus
+ * @param {number|string} userId - The unique identifier of the user.
+ * @param {boolean} isActive - The new active status to set for the user.
+ * @returns {Promise<Object>} The updated user object.
+ * @throws {Error} Throws an error if the database query fails.
+ */
+
+async function updateStatus (userId, isActive) {
+  try {
+    const query = {
+      text: 'UPDATE users SET is_active = $1, updated_at = now() WHERE user_id = $2 RETURNING *',
+      values: [isActive, userId]
+    }
+    const result = await pool.query(query)
+    return result.rows[0]
+  } catch (error) {
+    console.log('Error updating status: ', error)
+    throw error
+  }
+}
+
+/**
  * Deletes a user from the database by their user ID.
  *
  * @async
@@ -235,7 +260,7 @@ async function deleteUserById (userId) {
     }
 
     const query = {
-      text: 'DELETE FROM users WHERE user_id = $1',
+      text: 'UPDATE users SET is_active = false WHERE user_id = $1',
       values: [userId]
     }
     await pool.query(query)
@@ -252,5 +277,6 @@ export const Users = {
   updateUserPassword,
   updateImageUserById,
   getUserByEmail,
+  updateStatus,
   deleteUserById
 }

@@ -40,8 +40,8 @@ app.use(cors({
   origin: [
     'https://localhost:3000',
     'http://localhost:3000',
-    'https://192.168.34.101:4000',
-    'http://192.168.34.101:4000'
+    'https://192.168.34.105:4000',
+    'http://192.168.34.105:4000'
   ],
   credentials: true
 }))
