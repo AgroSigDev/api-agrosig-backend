@@ -1,7 +1,7 @@
 import express from 'express'
 import path from 'path'
 import fs from 'fs'
-import { getAllUsers, getUserById, updateUserById, updateUserPassword, updateImageUserById, deleteUserById } from '../../controllers/index.js'
+import { getAllUsers, getUserById, updateUserById, updateUserPassword, updateImageUserById, updateRole, updateStatus, deleteUserById } from '../../controllers/index.js'
 import { autenticate, authorize } from '../../middlewares/index.js'
 import { uploadProfile } from '../../helpers/index.js'
 
@@ -125,6 +125,39 @@ router.patch('/image/:id', autenticate, uploadProfile, async (request, response,
       message: 'Error al actualizar imagen',
       error: error.message
     })
+  }
+})
+
+// PATCH /users/update-role/:id
+router.patch('/update-role/:id', autenticate, authorize(['admin']), async (request, response, next) => {
+  try {
+    const userId = request.params.id
+    const roleId = request.body.role_id
+
+    const result = await updateRole(userId, roleId)
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// PATCH /users/update-status/:id
+router.patch('/update-status/:id', autenticate, authorize(['admin']), async (request, response, next) => {
+  try {
+    const userId = request.params.id
+    const { is_active: isActive } = request.body
+
+    const result = await updateStatus(userId, isActive)
+
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    next(error)
   }
 })
 

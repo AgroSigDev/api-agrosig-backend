@@ -1,4 +1,4 @@
-import { Users } from '../../models/index.js'
+import { Users, Role } from '../../models/index.js'
 
 async function getAllUsers () {
   const result = await Users.getAllUsers()
@@ -35,6 +35,16 @@ async function updateImageUserById (userId, imagePath) {
   return result
 }
 
+async function updateRole (userId, roleId) {
+  const result = await Role.updateRoleById(userId, roleId)
+  return result
+}
+
+async function updateStatus (userId, isActive) {
+  const result = await Users.updateStatus(userId, isActive)
+  return result
+}
+
 async function deleteUserById (userId) {
   await Users.deleteUserById(userId)
 }
@@ -46,5 +56,7 @@ export {
   updateUserById,
   updateUserPassword,
   updateImageUserById,
+  updateRole,
+  updateStatus,
   deleteUserById
 }

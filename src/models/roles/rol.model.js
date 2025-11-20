@@ -70,8 +70,37 @@ async function getRoleBYId (roleId) {
   }
 }
 
+/**
+ * Updates the role for a user by their ID.
+ *
+ * @async
+ * @function updateRoleById
+ * @param {(number|string)} userId - The unique identifier of the user to update.
+ * @param {(number|string)} roleId - The identifier of the role to assign to the user.
+ * @returns {Promise<Object|undefined>} A promise that resolves to the updated user row (as returned by the database) or undefined if no row was updated.
+ * @throws {Error} If a database error occurs while performing the update.
+ * @example
+ * // Assign role 3 to user 42
+ * const updatedUser = await updateRoleById(42, 3);
+ */
+
+async function updateRoleById (userId, roleId) {
+  try {
+    const query = {
+      text: 'UPDATE users SET role_id = $1, updated_at = now() WHERE user_id = $2 RETURNING *',
+      values: [roleId, userId]
+    }
+    const result = await pool.query(query)
+    return result.rows[0]
+  } catch (error) {
+    console.error('Error updating role by ID:', error)
+    throw error
+  }
+}
+
 export const Role = {
   getUserByIdRole,
   getAllUsers,
-  getRoleBYId
+  getRoleBYId,
+  updateRoleById
 }
