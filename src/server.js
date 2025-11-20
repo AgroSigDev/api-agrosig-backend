@@ -1,7 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import https from 'https'
-import fs from 'fs'
+import http from 'http'
 import { setupSwagger } from '../swagger.config.js'
 import { config } from '../config.js'
 import userRouter from './routes/users/users.routes.js'
@@ -21,14 +20,8 @@ import { fileURLToPath } from 'url'
 
 const app = express()
 
-// Leer certificados SSL
-const sslOptions = {
-  key: fs.readFileSync('./key.pem'),
-  cert: fs.readFileSync('./cert.pem')
-}
-
 // Configuración del servidor HTTPS
-const httpsServer = https.createServer(sslOptions, app)
+const httpServer = http.createServer(app)
 
 // Iniciar el servicio de notificaciones programadas
 notificationsSchedulerService.startSchedulers()
@@ -80,9 +73,9 @@ app.get('/', (request, response) => {
       }
     ],
     documentation: config.docs.urlDocs,
-    api_endpoint: `https://localhost:${config.port}`,
+    api_endpoint: `http://localhost:${config.port}`,
     environment: config.env
   })
 })
 
-export { httpsServer }
+export { httpServer }

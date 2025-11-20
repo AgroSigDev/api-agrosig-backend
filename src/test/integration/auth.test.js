@@ -1,9 +1,9 @@
 import request from 'supertest'
-import { httpsServer } from '../../server.js'
+import { httpServer } from '../../server.js'
 import { pool } from '../../lib/db.js'
 
 // Crear un agente personalizado que acepte certificados auto-firmados
-const agent = request.agent(httpsServer, {
+const agent = request.agent(httpServer, {
   ca: [], // Ignorar verificación de CA
   rejectUnauthorized: false // Aceptar certificados auto-firmados
 })
@@ -19,7 +19,7 @@ describe('🔐 AUTH Endpoints', () => {
     // Limpiar después de todas las pruebas
     await pool.query("DELETE FROM users WHERE email LIKE '%test%' OR email = 'david@example.com'")
     await pool.end()
-    httpsServer.close() // Cerrar el servidor HTTPS
+    httpServer.close() // Cerrar el servidor HTTPS
   })
 
   describe('🧩 POST /auth/register', () => {
