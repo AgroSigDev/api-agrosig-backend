@@ -27,6 +27,33 @@ async function validFieldsRegister (user) {
 }
 
 /**
+ * Validates that all required user profile update fields are present.
+ * Throws an error if any required field is missing.
+ *
+ * @async
+ * @param {Object} user - The user object to validate.
+ * @param {string} user.first_name - The user's first name.
+ * @param {string} user.paternal_surname - The user's paternal surname.
+ * @param {string} user.maternal_surname - The user's maternal surname.
+ * @param {string} user.email - The user's email address.
+ * @throws {Error} If any required field is missing.
+ */
+async function validFieldsUpdateProfile (user) {
+  if (!user.first_name || !user.paternal_surname || !user.maternal_surname || !user.email) {
+    logger.validation.warn('Campos faltantes en actualización de perfil', {
+      camposRecibidos: Object.keys(user),
+      camposFaltantes: ['first_name', 'paternal_surname', 'maternal_surname', 'email'].filter(field => !user[field])
+    })
+    throw new ValidationError('There are missing fields to submit in the application')
+  }
+
+  // Validar formato de email
+  await validateEmialFormart(user.email)
+
+  logger.validation.info('Validación de campos de actualización de perfil exitosa', { email: user.email })
+}
+
+/**
  * Validates that the provided password string has a minimum length of 8 characters.
  * Throws an error if the password is too short.
  *
@@ -44,6 +71,7 @@ async function validateFieldsLogin (user) {
   }
   logger.validation.info('Validación de campos de login exitosa', { email: user.email })
 }
+
 /**
 
 Validates that the provided password string has a minimum length of 8 characters.
@@ -83,6 +111,7 @@ async function validateEmialFormart (email) {
 
 export {
   validFieldsRegister,
+  validFieldsUpdateProfile,
   validateFieldsLogin,
   vaidateStringLength,
   validateEmialFormart

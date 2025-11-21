@@ -9,12 +9,47 @@ import { logger } from '../../utils/logger.utils.js'
 
 const router = express.Router()
 
+// GET /users/
+router.get('/', autenticate, authorize(['admin']), async (request, response, next) => {
+  const startTime = Date.now()
+
+  try {
+    logger.api.info('Solicitud de obtención de todos los usuarios', {
+      adminUserId: request.user.user_id,
+      ip: request.ip,
+      userAgent: request.get('User-Agent')
+    })
+
+    const result = await getAllUsers()
+    const responseTime = Date.now() - startTime
+
+    logger.api.info('Lista de usuarios obtenida exitosamente', {
+      totalUsuarios: result.length,
+      adminUserId: request.user.user_id,
+      responseTime: `${responseTime}ms`
+    })
+
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    logger.api.error('Error en endpoint de obtención de todos los usuarios', {
+      adminUserId: request.user?.user_id,
+      responseTime: `${responseTime}ms`,
+      error: error.message
+    })
+    next(error)
+  }
+})
+
 // GET /users/get-user/:id
 router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
   const startTime = Date.now()
 
   try {
-    const userId = request.user.user_id
+    const userId = request.params.id
 
     logger.api.info('Solicitud de obtención de usuario propio', {
       userId,
@@ -53,43 +88,8 @@ router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (re
   }
 })
 
-// GET /users/
-router.get('/', autenticate, authorize(['admin']), async (request, response, next) => {
-  const startTime = Date.now()
-
-  try {
-    logger.api.info('Solicitud de obtención de todos los usuarios', {
-      adminUserId: request.user.user_id,
-      ip: request.ip,
-      userAgent: request.get('User-Agent')
-    })
-
-    const result = await getAllUsers()
-    const responseTime = Date.now() - startTime
-
-    logger.api.info('Lista de usuarios obtenida exitosamente', {
-      totalUsuarios: result.length,
-      adminUserId: request.user.user_id,
-      responseTime: `${responseTime}ms`
-    })
-
-    response.status(200).json({
-      success: true,
-      data: result
-    })
-  } catch (error) {
-    const responseTime = Date.now() - startTime
-    logger.api.error('Error en endpoint de obtención de todos los usuarios', {
-      adminUserId: request.user?.user_id,
-      responseTime: `${responseTime}ms`,
-      error: error.message
-    })
-    next(error)
-  }
-})
-
 // PATCH /users/update-profile/:id
-router.patch('/update-profile/:id', autenticate, async (request, response, next) => {
+router.patch('/update-profile/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
   const startTime = Date.now()
 
   try {
@@ -127,7 +127,7 @@ router.patch('/update-profile/:id', autenticate, async (request, response, next)
 })
 
 // PATCH /users/update-password/:id
-router.patch('/update-password/:id', autenticate, async (request, response, next) => {
+router.patch('/update-password/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
   const startTime = Date.now()
 
   try {
@@ -167,7 +167,7 @@ router.patch('/update-password/:id', autenticate, async (request, response, next
 })
 
 // PATCH /users/image/:id
-router.patch('/image/:id', autenticate, uploadProfile, async (request, response, next) => {
+router.patch('/image/:id', autenticate, authorize(['admin', 'user']), uploadProfile, async (request, response, next) => {
   const startTime = Date.now()
 
   try {
@@ -322,11 +322,11 @@ router.patch('/update-status/:id', autenticate, authorize(['admin']), async (req
 })
 
 // DELETE /users/:id
-router.delete('/:id', autenticate, async (request, response, next) => {
+router.delete('/delete-user/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   const startTime = Date.now()
 
   try {
-    const userId = request.user.user_id
+    const userId = request.params.id
 
     logger.api.info('Solicitud de eliminación de usuario', {
       userId,

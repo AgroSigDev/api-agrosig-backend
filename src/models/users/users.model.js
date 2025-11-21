@@ -2,9 +2,10 @@ import { pool } from '../../lib/db.js'
 import {
   vaidateStringLength,
   hashPassword,
-  comparePasswords
+  comparePasswords,
+  validFieldsUpdateProfile
 } from '../../middlewares/index.js'
-import { NotFoundError, InternalServerError, ConflictError, ValidationError } from '../../lib/api.errors.js'
+import { NotFoundError, InternalServerError, ConflictError, ValidationError, BadRequestError } from '../../lib/api.errors.js'
 import { logger } from '../../utils/logger.utils.js'
 
 /**
@@ -116,6 +117,8 @@ async function updateUserById (userId, userData) {
       camposActualizados: Object.keys(userData)
     })
 
+    await validFieldsUpdateProfile(userData)
+
     const existingUser = await getUserById(userId)
     if (!existingUser) {
       logger.users.warn('Usuario no encontrado para actualización', { userId })
@@ -140,7 +143,9 @@ async function updateUserById (userId, userData) {
       error: error.message
     })
 
-    if (error instanceof NotFoundError) throw error
+    if (error instanceof ValidationError || error instanceof NotFoundError) {
+      throw error
+    }
     throw new InternalServerError('Error updating user by ID', { original: error.message })
   }
 }
@@ -264,7 +269,10 @@ async function updateImageUserById (userId, newImagePath) {
       error: error.message
     })
 
-    if (error instanceof NotFoundError) throw error
+    if (error instanceof BadRequestError || error instanceof NotFoundError) {
+      throw error
+    }
+
     throw new InternalServerError('Error updating image', { original: error.message })
   }
 }

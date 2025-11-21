@@ -109,18 +109,16 @@ router.post('/logout', async (request, response, next) => {
     const responseTime = Date.now() - startTime
 
     logger.api.info('Logout completado exitosamente', {
-      refreshToken,
       responseTime: `${responseTime}ms`
     })
 
     response.status(200).json({
       success: true,
-      message: 'Logout successful. Tokens invalidated.'
+      message: 'Logout successful. Session terminated.'
     })
   } catch (error) {
     const responseTime = Date.now() - startTime
     logger.api.error('Error en endpoint de logout', {
-      refreshToken: request.headers['x-refresh-token'],
       responseTime: `${responseTime}ms`,
       error: error.message
     })

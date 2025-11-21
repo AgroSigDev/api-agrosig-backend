@@ -19,6 +19,12 @@ const logger = createLogger({
       level: 'error'
     }),
 
+    // ⚠️ Advertencias
+    new transports.File({
+      filename: path.join(__dirname, '../logs/warn.log'),
+      level: 'warn'
+    }),
+
     // ℹ️ Solo info
     new transports.File({
       filename: path.join(__dirname, '../logs/info.log'),
@@ -42,7 +48,7 @@ const logger = createLogger({
   ]
 })
 
-// 🎭 Métodos helper por contexto
+// 🎭 Métodos helper por contexto - AGREGAR warn A TODOS
 logger.auth = {
   info: (message, meta = {}) => logger.info({ ...meta, context: 'AUTH', message }),
   error: (message, meta = {}) => logger.error({ ...meta, context: 'AUTH', message }),
@@ -51,12 +57,14 @@ logger.auth = {
 
 logger.database = {
   info: (message, meta = {}) => logger.info({ ...meta, context: 'DATABASE', message }),
-  error: (message, meta = {}) => logger.error({ ...meta, context: 'DATABASE', message })
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'DATABASE', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'DATABASE', message })
 }
 
 logger.api = {
   info: (message, meta = {}) => logger.info({ ...meta, context: 'API', message }),
-  error: (message, meta = {}) => logger.error({ ...meta, context: 'API', message })
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'API', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'API', message })
 }
 
 logger.validation = {
@@ -69,11 +77,6 @@ logger.users = {
   info: (message, meta = {}) => logger.info({ ...meta, context: 'USERS', message }),
   error: (message, meta = {}) => logger.error({ ...meta, context: 'USERS', message }),
   warn: (message, meta = {}) => logger.warn({ ...meta, context: 'USERS', message })
-}
-
-logger.roles = {
-  info: (message, meta = {}) => logger.info({ ...meta, context: 'ROLES', message }),
-  error: (message, meta = {}) => logger.error({ ...meta, context: 'ROLES', message })
 }
 
 export { logger }

@@ -8,7 +8,7 @@ import {
   comparePasswords
 } from '../../middlewares/index.js'
 import { generateAuthToken, generateRefreshToken } from '../../utils/token.utils.js'
-import { NotFoundError, AuthError, ForbiddenError, InternalServerError, ConflictError } from '../../lib/api.errors.js'
+import { NotFoundError, AuthError, ForbiddenError, ValidationError, InternalServerError, ConflictError } from '../../lib/api.errors.js'
 import { logger } from '../../utils/logger.utils.js'
 
 /**
@@ -163,7 +163,7 @@ async function loginUser (user) {
       error: error.message
     })
 
-    if (error instanceof NotFoundError || error instanceof AuthError || error instanceof ForbiddenError) {
+    if (error instanceof NotFoundError || error instanceof AuthError || error instanceof ForbiddenError || error instanceof ValidationError) {
       throw error
     }
 
