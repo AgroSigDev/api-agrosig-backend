@@ -4,6 +4,8 @@ import {
   hashPassword,
   comparePasswords
 } from '../../middlewares/index.js'
+import { NotFoundError, InternalServerError, ConflictError, ValidationError } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 /**
  * Retrieves a user from the database by their user ID.
@@ -17,14 +19,29 @@ import {
 
 async function getUserById (userId) {
   try {
+    logger.users.info('Obteniendo usuario por ID', { userId })
+
     const query = {
       text: 'SELECT * FROM users WHERE user_id = $1',
       values: [userId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.users.info('Usuario encontrado por ID', {
+        userId,
+        email: result.rows[0].email
+      })
+    } else {
+      logger.users.warn('Usuario no encontrado por ID', { userId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error getting user by ID:', error)
+    logger.users.error('Error obteniendo usuario por ID', {
+      userId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -40,6 +57,8 @@ async function getUserById (userId) {
 
 async function getAllUsers () {
   try {
+    logger.users.info('Obteniendo todos los usuarios')
+
     const query = {
       text: `
         SELECT 
@@ -60,9 +79,16 @@ async function getAllUsers () {
       `
     }
     const result = await pool.query(query)
+
+    logger.users.info('Todos los usuarios obtenidos exitosamente', {
+      total: result.rows.length
+    })
+
     return result.rows
   } catch (error) {
-    console.error('Error getting all users:', error)
+    logger.users.error('Error obteniendo todos los usuarios', {
+      error: error.message
+    })
     throw error
   }
 }
@@ -85,9 +111,15 @@ async function getAllUsers () {
 
 async function updateUserById (userId, userData) {
   try {
+    logger.users.info('Iniciando actualización de perfil de usuario', {
+      userId,
+      camposActualizados: Object.keys(userData)
+    })
+
     const existingUser = await getUserById(userId)
     if (!existingUser) {
-      throw new Error('User not found')
+      logger.users.warn('Usuario no encontrado para actualización', { userId })
+      throw new NotFoundError('User not found')
     }
 
     const query = {
@@ -95,10 +127,21 @@ async function updateUserById (userId, userData) {
       values: [userData.first_name, userData.paternal_surname, userData.maternal_surname, userData.email, userId]
     }
     const result = await pool.query(query)
+
+    logger.users.info('Perfil de usuario actualizado exitosamente', {
+      userId,
+      email: result.rows[0].email
+    })
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error updating user by ID:', error)
-    throw error
+    logger.users.error('Error actualizando perfil de usuario', {
+      userId,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError) throw error
+    throw new InternalServerError('Error updating user by ID', { original: error.message })
   }
 }
 
@@ -119,29 +162,34 @@ async function updateUserById (userId, userData) {
 
 async function updateUserPassword (userId, oldPassword, newPassword, repeatedPassword) {
   try {
+    logger.users.info('Iniciando actualización de contraseña', { userId })
+
     if (!oldPassword || !newPassword || !repeatedPassword) {
-      throw new Error('Todos los campos son requeridos')
+      logger.users.warn('Campos faltantes en actualización de contraseña', { userId })
+      throw new ValidationError('Todos los campos son requeridos')
     }
 
     const existingUser = await getUserById(userId)
     if (!existingUser) {
-      throw new Error('User not found')
+      logger.users.warn('Usuario no encontrado para actualizar contraseña', { userId })
+      throw new NotFoundError('User not found')
     }
 
     const isOldPasswordValid = await comparePasswords(oldPassword, existingUser.password)
-
     if (!isOldPasswordValid) {
-      throw new Error('The current password is incorrect')
+      logger.users.warn('Contraseña actual incorrecta', { userId })
+      throw new ConflictError('The current password is incorrect')
     }
 
     const isSamePassword = await comparePasswords(newPassword, existingUser.password)
-
     if (isSamePassword) {
-      throw new Error('The new password cannot be the same as the current password')
+      logger.users.warn('Nueva contraseña igual a la actual', { userId })
+      throw new ConflictError('The new password cannot be the same as the current password')
     }
 
     if (newPassword !== repeatedPassword) {
-      throw new Error('The new password do not match')
+      logger.users.warn('Las contraseñas nuevas no coinciden', { userId })
+      throw new ConflictError('The new password do not match')
     }
 
     await vaidateStringLength(newPassword)
@@ -153,10 +201,20 @@ async function updateUserPassword (userId, oldPassword, newPassword, repeatedPas
       values: [hashedPassword, userId]
     }
     const result = await pool.query(query)
+
+    logger.users.info('Contraseña actualizada exitosamente', { userId })
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error updating user password by ID:', error)
-    throw error
+    logger.users.error('Error actualizando contraseña', {
+      userId,
+      error: error.message
+    })
+
+    if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
+      throw error
+    }
+    throw new InternalServerError('Error updating user password', { original: error.message })
   }
 }
 
@@ -171,25 +229,43 @@ async function updateUserPassword (userId, oldPassword, newPassword, repeatedPas
  * @throws {Error} If the user is not found or if there is a database error.
  */
 
-async function updateImageUserById (userId, nweImagePath) {
+async function updateImageUserById (userId, newImagePath) {
   try {
+    logger.users.info('Iniciando actualización de imagen de perfil', {
+      userId,
+      nuevaImagen: newImagePath
+    })
+
     const existingUser = await getUserById(userId)
     if (!existingUser) {
-      throw new Error('User not found')
+      logger.users.warn('Usuario no encontrado para actualizar imagen', { userId })
+      throw new NotFoundError('User not found')
     }
 
     const query = {
       text: 'UPDATE users SET image_user = $1, updated_at = now() WHERE user_id = $2 RETURNING *',
-      values: [nweImagePath, userId]
+      values: [newImagePath, userId]
     }
     const result = await pool.query(query)
+
+    logger.users.info('Imagen de perfil actualizada exitosamente', {
+      userId,
+      imagenAnterior: existingUser.image_user,
+      nuevaImagen: newImagePath
+    })
+
     return {
       user: result.rows[0],
       oldImagePath: existingUser.image_user || null
     }
   } catch (error) {
-    console.error('Error updating user image by ID:', error)
-    throw error
+    logger.users.error('Error actualizando imagen de perfil', {
+      userId,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError) throw error
+    throw new InternalServerError('Error updating image', { original: error.message })
   }
 }
 
@@ -205,14 +281,29 @@ async function updateImageUserById (userId, nweImagePath) {
 
 async function getUserByEmail (email) {
   try {
+    logger.users.info('Buscando usuario por email', { email })
+
     const query = {
       text: 'SELECT * FROM users WHERE email = $1',
       values: [email]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.users.info('Usuario encontrado por email', {
+        email,
+        userId: result.rows[0].user_id
+      })
+    } else {
+      logger.users.info('Usuario no encontrado por email', { email })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error getting user by email:', error)
+    logger.users.error('Error obteniendo usuario por email', {
+      email,
+      error: error.message
+    })
     throw error
   }
 }
@@ -230,15 +321,38 @@ async function getUserByEmail (email) {
 
 async function updateStatus (userId, isActive) {
   try {
+    logger.users.info('Actualizando estado de usuario', {
+      userId,
+      nuevoEstado: isActive
+    })
+
+    const existingUser = await getUserById(userId)
+    if (!existingUser) {
+      logger.users.warn('Usuario no encontrado para actualizar estado', { userId })
+      throw new NotFoundError('User not found')
+    }
+
     const query = {
       text: 'UPDATE users SET is_active = $1, updated_at = now() WHERE user_id = $2 RETURNING *',
       values: [isActive, userId]
     }
     const result = await pool.query(query)
+
+    logger.users.info('Estado de usuario actualizado exitosamente', {
+      userId,
+      estadoAnterior: existingUser.is_active,
+      nuevoEstado: isActive
+    })
+
     return result.rows[0]
   } catch (error) {
-    console.log('Error updating status: ', error)
-    throw error
+    logger.users.error('Error actualizando estado de usuario', {
+      userId,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError) throw error
+    throw new InternalServerError('Error updating status', { original: error.message })
   }
 }
 
@@ -254,9 +368,12 @@ async function updateStatus (userId, isActive) {
 
 async function deleteUserById (userId) {
   try {
+    logger.users.info('Iniciando eliminación lógica de usuario', { userId })
+
     const existingUser = await getUserById(userId)
     if (!existingUser) {
-      throw new Error('User not found')
+      logger.users.warn('Usuario no encontrado para eliminar', { userId })
+      throw new NotFoundError('User not found')
     }
 
     const query = {
@@ -264,9 +381,16 @@ async function deleteUserById (userId) {
       values: [userId]
     }
     await pool.query(query)
+
+    logger.users.info('Usuario desactivado exitosamente', { userId })
   } catch (error) {
-    console.error('Error deleting user by ID:', error)
-    throw error
+    logger.users.error('Error eliminando usuario', {
+      userId,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError) throw error
+    throw new InternalServerError('Error deleting by user', { original: error.message })
   }
 }
 

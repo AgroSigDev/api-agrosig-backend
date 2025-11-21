@@ -46,6 +46,7 @@
     "swagger-themes": "^1.4.3",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
+    "winston": "^3.18.3",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {

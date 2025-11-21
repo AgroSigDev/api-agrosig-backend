@@ -8,6 +8,8 @@ import {
   comparePasswords
 } from '../../middlewares/index.js'
 import { generateAuthToken, generateRefreshToken } from '../../utils/token.utils.js'
+import { NotFoundError, AuthError, ForbiddenError, InternalServerError, ConflictError } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 /**
  * Registers a new user in the system.
@@ -30,16 +32,18 @@ import { generateAuthToken, generateRefreshToken } from '../../utils/token.utils
 
 async function registerUser (user) {
   try {
+    logger.auth.info('Iniciando registro de usuario', { email: user.email })
+
     await validFieldsRegister(user)
 
     const existingUser = await getUserByEmail(user.email)
 
     if (existingUser) {
-      throw new Error('User already exists')
+      logger.auth.warn('Intento de registro con email existente', { email: user.email })
+      throw new ConflictError('User with this email already exists')
     }
 
     await vaidateStringLength(user.password)
-
     await validateEmialFormart(user.email)
 
     const hashedPassword = await hashPassword(user.password)
@@ -62,17 +66,22 @@ async function registerUser (user) {
     }
 
     const result = await pool.query(registerQuery)
-
     const token = generateAuthToken(result.rows[0])
 
-    const group = {
+    logger.auth.info('Usuario registrado exitosamente', {
+      userId: result.rows[0].user_id,
+      email: user.email
+    })
+
+    return {
       result: result.rows[0],
       token
     }
-
-    return group
   } catch (error) {
-    console.error('Error registering user:', error)
+    logger.auth.error('Error en registro de usuario', {
+      email: user.email,
+      error: error.message
+    })
     throw error
   }
 }
@@ -92,52 +101,73 @@ async function registerUser (user) {
  */
 
 async function loginUser (user) {
-  await validateFieldsLogin(user)
+  try {
+    logger.auth.info('Iniciando proceso de login', { email: user.email })
 
-  const foundUser = await getUserByEmail(user.email)
+    await validateFieldsLogin(user)
 
-  if (!foundUser) {
-    throw new Error('User not found')
-  }
+    const foundUser = await getUserByEmail(user.email)
 
-  if (foundUser.google_id) {
-    throw new Error('The email is already linked to this Google account')
-  }
+    if (!foundUser) {
+      logger.auth.warn('Usuario no encontrado en login', { email: user.email })
+      throw new NotFoundError('User not found')
+    }
 
-  if (!foundUser.is_active) {
-    throw new Error('User is not active, please request reactivation from an administrator.')
-  }
+    if (foundUser.google_id) {
+      logger.auth.warn('Intento de login con cuenta de Google', { email: user.email })
+      throw new AuthError('The email is already linked to this Google account')
+    }
 
-  const isPasswordValidate = await comparePasswords(
-    user.password,
-    foundUser.password
-  )
+    if (!foundUser.is_active) {
+      logger.auth.warn('Intento de login con usuario inactivo', { email: user.email })
+      throw new ForbiddenError('User is not active, please request reactivation from an administrator.')
+    }
 
-  if (!isPasswordValidate) {
-    throw new Error('Invalid password')
-  }
+    const isPasswordValidate = await comparePasswords(user.password, foundUser.password)
 
-  const token = generateAuthToken(foundUser)
-  const refreshToken = generateRefreshToken(foundUser)
+    if (!isPasswordValidate) {
+      logger.auth.warn('Contraseña incorrecta en login', { email: user.email })
+      throw new AuthError('Invalid password')
+    }
 
-  await saveRefreshToken(foundUser.user_id, refreshToken)
+    const token = generateAuthToken(foundUser)
+    const refreshToken = generateRefreshToken(foundUser)
 
-  return {
-    user: {
-      user_id: foundUser.user_id,
-      role_id: foundUser.role_id, //  Asegurar que role_id esté incluido
-      first_name: foundUser.first_name,
-      paternal_surname: foundUser.paternal_surname,
-      maternal_surname: foundUser.maternal_surname,
-      email: foundUser.email,
-      image_user: foundUser.image_user,
-      configured_plot: foundUser.configured_plot,
-      is_active: foundUser.is_active,
-      created_at: foundUser.created_at,
-      updated_at: foundUser.updated_at
-    },
-    token,
-    refreshToken
+    await saveRefreshToken(foundUser.user_id, refreshToken)
+
+    logger.auth.info('Login exitoso', {
+      userId: foundUser.user_id,
+      email: user.email
+    })
+
+    return {
+      user: {
+        user_id: foundUser.user_id,
+        role_id: foundUser.role_id,
+        first_name: foundUser.first_name,
+        paternal_surname: foundUser.paternal_surname,
+        maternal_surname: foundUser.maternal_surname,
+        email: foundUser.email,
+        image_user: foundUser.image_user,
+        configured_plot: foundUser.configured_plot,
+        is_active: foundUser.is_active,
+        created_at: foundUser.created_at,
+        updated_at: foundUser.updated_at
+      },
+      token,
+      refreshToken
+    }
+  } catch (error) {
+    logger.auth.error('Error en proceso de login', {
+      email: user.email,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError || error instanceof AuthError || error instanceof ForbiddenError) {
+      throw error
+    }
+
+    throw new InternalServerError('Error logging in user', { original: error.message })
   }
 }
 
@@ -158,9 +188,19 @@ async function getUserByEmail (email) {
       values: [email]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.database.info('Usuario encontrado por email', { email })
+    } else {
+      logger.database.info('Usuario no encontrado por email', { email })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error getting user by email:', error)
+    logger.database.error('Error obteniendo usuario por email', {
+      email,
+      error: error.message
+    })
     throw error
   }
 }
@@ -169,52 +209,104 @@ async function getUserByEmail (email) {
  * Guarda un refresh token en la base de datos.
  */
 async function saveRefreshToken (userId, refreshToken) {
-  const query = {
-    text: 'INSERT INTO tokens (user_id, refresh_token) VALUES ($1, $2)',
-    values: [userId, refreshToken]
+  try {
+    const query = {
+      text: 'INSERT INTO tokens (user_id, refresh_token) VALUES ($1, $2)',
+      values: [userId, refreshToken]
+    }
+    await pool.query(query)
+    logger.database.info('Refresh token guardado', { userId })
+  } catch (error) {
+    logger.database.error('Error guardando refresh token', {
+      userId,
+      error: error.message
+    })
+    throw error
   }
-  await pool.query(query)
 }
 
 /**
  * Revoca (invalida) un refresh token en la base de datos.
  */
 async function revokeRefreshToken (refreshToken) {
-  const query = {
-    text: 'UPDATE tokens SET is_revoked = true WHERE refresh_token = $1',
-    values: [refreshToken]
+  try {
+    const query = {
+      text: 'UPDATE tokens SET is_revoked = true WHERE refresh_token = $1',
+      values: [refreshToken]
+    }
+    await pool.query(query)
+    logger.database.info('Refresh token revocado', { refreshToken })
+  } catch (error) {
+    logger.database.error('Error revocando refresh token', {
+      refreshToken,
+      error: error.message
+    })
+    throw error
   }
-  await pool.query(query)
 }
 
 /**
  * Verifica si un refresh token fue revocado.
  */
 async function isRefreshTokenRevoked (refreshToken) {
-  const query = {
-    text: 'SELECT is_revoked FROM tokens WHERE refresh_token = $1',
-    values: [refreshToken]
+  try {
+    const query = {
+      text: 'SELECT is_revoked FROM tokens WHERE refresh_token = $1',
+      values: [refreshToken]
+    }
+    const result = await pool.query(query)
+    const revoked = result.rows.length > 0 && result.rows[0].is_revoked === true
+
+    if (revoked) {
+      logger.database.info('Refresh token está revocado', { refreshToken })
+    }
+
+    return revoked
+  } catch (error) {
+    logger.database.error('Error verificando refresh token revocado', {
+      refreshToken,
+      error: error.message
+    })
+    throw error
   }
-  const result = await pool.query(query)
-  return result.rows.length > 0 && result.rows[0].is_revoked === true
 }
 
 /**
  * Cierra sesión revocando el refresh token
  */
 async function logoutUser (refreshToken) {
-  await revokeRefreshToken(refreshToken)
-  return { message: 'Logout successful. Tokens revoked.' }
+  try {
+    await revokeRefreshToken(refreshToken)
+    logger.auth.info('Logout exitoso', { refreshToken })
+    return { message: 'Logout successful. Tokens revoked.' }
+  } catch (error) {
+    logger.auth.error('Error en logout', {
+      refreshToken,
+      error: error.message
+    })
+    throw error
+  }
 }
 
 /**
  * Verifica si un refresh token es válido y no está revocado
  */
 async function validateRefreshToken (refreshToken) {
-  const revoked = await isRefreshTokenRevoked(refreshToken)
-  if (revoked) throw new Error('Refresh token has been revoked')
+  try {
+    const revoked = await isRefreshTokenRevoked(refreshToken)
+    if (revoked) {
+      logger.auth.warn('Refresh token revocado', { refreshToken })
+      throw new Error('Refresh token has been revoked')
+    }
+    logger.auth.info('Refresh token válido', { refreshToken })
+  } catch (error) {
+    logger.auth.error('Error validando refresh token', {
+      refreshToken,
+      error: error.message
+    })
+    throw error
+  }
 }
-
 export const Auth = {
   registerUser,
   loginUser,

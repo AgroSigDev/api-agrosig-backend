@@ -17,6 +17,8 @@ import notificationService from './routes/notifications/notifications.routes.js'
 import notificationsSchedulerService from './services/notifications.scheduler.service.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { BadRequestError } from './lib/api.errors.js'
+import { errorHandler } from './middlewares/index.js'
 
 const app = express()
 
@@ -31,9 +33,7 @@ console.log('🔔 Servicio de notificaciones programadas iniciado.', notificatio
 app.use(express.json())
 app.use(cors({
   origin: [
-    'https://localhost:3000',
     'http://localhost:3000',
-    'https://192.168.34.105:4000',
     'http://192.168.34.105:4000'
   ],
   credentials: true
@@ -77,5 +77,13 @@ app.get('/', (request, response) => {
     environment: config.env
   })
 })
+
+// Middleware para manejar errores de rutas no encontradas
+app.use((request, response, next) => {
+  next(new BadRequestError('Route not found: ' + request.originalUrl))
+})
+
+// Middleware para manejar errores - Middleware de error principal
+app.use(errorHandler)
 
 export { httpServer }

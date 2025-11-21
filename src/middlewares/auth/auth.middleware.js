@@ -1,6 +1,8 @@
 import { verifyToken, verifyRefresToken } from '../../helpers/jwt.helper.js'
 import { generateAuthToken } from '../../utils/token.utils.js'
 import { Auth } from '../../models/index.js'
+import { AuthError, TokenExpired } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 /**
  * Middleware to verify JWT token from the Authorization header.
@@ -21,37 +23,46 @@ export const autenticate = async (request, response, next) => {
   const refreshToken = request.headers['x-refresh-token']
 
   if (!accessToken && !refreshToken) {
-    return response.status(403).json({
-      success: false,
-      message: 'Unauthorized access, the token is missing'
-    })
+    logger.auth.warn('Middleware auth - Sin tokens proporcionados')
+    return next(new AuthError('Authorization header is missing'))
   }
 
   try {
     if (accessToken) {
       const decoded = verifyToken(accessToken)
       request.user = { user_id: decoded.user_id, role_id: decoded.role_id }
+      logger.auth.info('Middleware auth - Token de acceso válido', {
+        userId: decoded.user_id
+      })
       return next()
     }
   } catch (error) {
-    if (error.name !== 'TokenExpiredError') return next(error)
+    logger.auth.warn('Middleware auth - Token de acceso expirado')
+    return next(new TokenExpired('Token Expired'))
   }
 
   try {
     if (refreshToken) {
       await Auth.validateRefreshToken(refreshToken)
       const refreshDecoded = verifyRefresToken(refreshToken)
-      const user = { user_id: refreshDecoded.user_id, role_id: refreshDecoded.role_id }
+      const user = {
+        user_id: refreshDecoded.user_id,
+        role_id: refreshDecoded.role_id
+      }
       const newAccessToken = generateAuthToken(user)
       response.set('x-new-access-token', newAccessToken)
       request.user = user
+
+      logger.auth.info('Middleware auth - Token refrescado exitosamente', {
+        userId: user.user_id
+      })
+
       return next()
     }
   } catch (error) {
-    return response.status(401).json({
-      success: false,
-      message: 'Invalid or revoked refresh token',
+    logger.auth.error('Middleware auth - Error refrescando token', {
       error: error.message
     })
+    next(error)
   }
 }

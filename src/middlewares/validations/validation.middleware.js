@@ -1,3 +1,6 @@
+import { ValidationError } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
+
 /**
  * Validates that all required user registration fields are present.
  * Throws an error if any required field is missing.
@@ -13,16 +16,14 @@
  */
 
 async function validFieldsRegister (user) {
-  if (
-    !user.first_name ||
-    !user.paternal_surname ||
-    !user.maternal_surname ||
-    !user.email ||
-    !user.password
-  ) {
-    console.error('Missing fields in user registration:', user)
-    throw new Error('There are missing fields to submit in the application')
+  if (!user.first_name || !user.paternal_surname || !user.maternal_surname || !user.email || !user.password) {
+    logger.validation.warn('Campos faltantes en registro', {
+      camposRecibidos: Object.keys(user),
+      camposFaltantes: ['first_name', 'paternal_surname', 'maternal_surname', 'email', 'password'].filter(field => !user[field])
+    })
+    throw new ValidationError('There are missing fields to submit in the application')
   }
+  logger.validation.info('Validación de campos de registro exitosa', { email: user.email })
 }
 
 /**
@@ -36,10 +37,13 @@ async function validFieldsRegister (user) {
 
 async function validateFieldsLogin (user) {
   if (!user.email || !user.password) {
-    throw new Error('There are missing fields to submit in the application')
+    logger.validation.warn('Campos faltantes en login', {
+      camposRecibidos: Object.keys(user)
+    })
+    throw new ValidationError('There are missing fields to submit in the application')
   }
+  logger.validation.info('Validación de campos de login exitosa', { email: user.email })
 }
-
 /**
 
 Validates that the provided password string has a minimum length of 8 characters.
@@ -51,8 +55,12 @@ Throws an error if the password is too short.
 
 async function vaidateStringLength (password) {
   if (password.length < 8) {
-    throw new Error('Password must be at least 8 characters long')
+    logger.validation.warn('Contraseña demasiado corta', {
+      longitud: password.length
+    })
+    throw new ValidationError('Password must be at least 8 characters long')
   }
+  logger.validation.info('Validación de longitud de contraseña exitosa')
 }
 
 /**
@@ -67,8 +75,10 @@ async function vaidateStringLength (password) {
 async function validateEmialFormart (email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
-    throw new Error('Invalid email format')
+    logger.validation.warn('Formato de email inválido', { email })
+    throw new ValidationError('Invalid email format')
   }
+  logger.validation.info('Validación de formato de email exitosa', { email })
 }
 
 export {
