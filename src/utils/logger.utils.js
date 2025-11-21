@@ -114,4 +114,10 @@ logger.production = {
   warn: (message, meta = {}) => logger.warn({ ...meta, context: 'PRODUCTION', message })
 }
 
+logger.comments = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'COMMENTS', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'COMMENTS', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'COMMENTS', message })
+}
+
 export { logger }
