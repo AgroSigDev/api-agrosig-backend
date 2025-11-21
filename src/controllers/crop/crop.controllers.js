@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../lib/api.errors.js'
 import { Crop } from '../../models/index.js'
 import { logger } from '../../utils/logger.utils.js'
 
@@ -62,6 +63,7 @@ async function getCropByUserId (userId, cropId) {
       logger.crops.info('Controlador - Cultivo obtenido exitosamente', { userId, cropId })
     } else {
       logger.crops.warn('Controlador - Cultivo no encontrado', { userId, cropId })
+      throw new NotFoundError('Crop not found')
     }
     return crop
   } catch (error) {

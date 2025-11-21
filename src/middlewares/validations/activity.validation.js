@@ -1,3 +1,6 @@
+import { ValidationError } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
+
 /**
  * Validates that all required fields are present in the activity object.
  * Throws an error if any required field is missing.
@@ -10,14 +13,37 @@
  * @throws {Error} If any required field is missing.
  */
 async function validateActivity (activity) {
-  if (
-    !activity.activity_type ||
-    !activity.date ||
-    !activity.description
-  ) {
-    console.error('Missing fields in activity registration:', activity)
-    throw new Error('There are missing fields to submit in the application')
+  if (!activity.activity_type || !activity.date || !activity.description) {
+    logger.warn('Validación de actividad fallida - campos faltantes', { activity })
+    throw new ValidationError('There are missing fields to submit in the application', {
+      missingFields: {
+        activity_type: !activity.activity_type,
+        date: !activity.date,
+        description: !activity.description
+      },
+      received: activity
+    })
   }
+
+  // Validación adicional para el tipo de actividad
+  if (typeof activity.activity_type !== 'string' || activity.activity_type.trim().length === 0) {
+    logger.warn('Validación de actividad fallida - tipo de actividad inválido', { activity })
+    throw new ValidationError('Activity type must be a non-empty string', {
+      field: 'activity_type',
+      value: activity.activity_type
+    })
+  }
+
+  // Validación adicional para la descripción
+  if (typeof activity.description !== 'string' || activity.description.trim().length === 0) {
+    logger.warn('Validación de actividad fallida - descripción inválida', { activity })
+    throw new ValidationError('Description must be a non-empty string', {
+      field: 'description',
+      value: activity.description
+    })
+  }
+
+  logger.debug('Validación de actividad exitosa', { activityType: activity.activity_type })
 }
 
 /**
@@ -41,8 +67,16 @@ async function validateInputUsed (inputUsed) {
     inputUsed.unit_cost === undefined ||
     inputUsed.unit_cost === null
   ) {
-    console.error('Missing fields in input used registration:', inputUsed)
-    throw new Error('There are missing fields to submit in the application')
+    logger.warn('Validación de insumo fallida - campos faltantes', { inputUsed })
+    throw new ValidationError('There are missing fields to submit in the application', {
+      missingFields: {
+        input_name: !inputUsed.input_name,
+        unit: !inputUsed.unit,
+        quantity: inputUsed.quantity === undefined || inputUsed.quantity === null,
+        unit_cost: inputUsed.unit_cost === undefined || inputUsed.unit_cost === null
+      },
+      received: inputUsed
+    })
   }
 
   // Validar que quantity y unit_cost sean números válidos y no negativos
@@ -52,9 +86,23 @@ async function validateInputUsed (inputUsed) {
     isNaN(parseFloat(inputUsed.unit_cost)) ||
     parseFloat(inputUsed.unit_cost) < 0
   ) {
-    console.error('Invalid numeric values in input used:', inputUsed)
-    throw new Error('Quantity and unit cost must be valid non-negative numbers')
+    logger.warn('Validación de insumo fallida - valores numéricos inválidos', { inputUsed })
+    throw new ValidationError('Quantity and unit cost must be valid non-negative numbers', {
+      quantity: inputUsed.quantity,
+      unit_cost: inputUsed.unit_cost
+    })
   }
+
+  // Validar que input_name sea un string no vacío
+  if (typeof inputUsed.input_name !== 'string' || inputUsed.input_name.trim().length === 0) {
+    logger.warn('Validación de insumo fallida - nombre de insumo inválido', { inputUsed })
+    throw new ValidationError('Input name must be a non-empty string', {
+      field: 'input_name',
+      value: inputUsed.input_name
+    })
+  }
+
+  logger.debug('Validación de insumo exitosa', { inputName: inputUsed.input_name })
 }
 
 /**
@@ -67,17 +115,23 @@ async function validateInputUsed (inputUsed) {
  */
 async function validateInputsArray (inputs) {
   if (!Array.isArray(inputs)) {
-    throw new Error('Inputs must be an array')
+    logger.warn('Validación de array de insumos fallida - no es un array')
+    throw new ValidationError('Inputs must be an array', {
+      received: typeof inputs
+    })
   }
 
   // Permite actividades sin insumos (como riego con agua gratuita)
   if (inputs.length === 0) {
+    logger.debug('Array de insumos vacío - permitido para ciertos tipos de actividad')
     return
   }
 
   for (const input of inputs) {
     await validateInputUsed(input)
   }
+
+  logger.debug('Validación de array de insumos exitosa', { count: inputs.length })
 }
 
 export {

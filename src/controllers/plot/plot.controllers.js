@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../lib/api.errors.js'
 import { Plot } from '../../models/index.js'
 import { logger } from '../../utils/logger.utils.js'
 
@@ -24,6 +25,7 @@ async function getPlotByUserId (userId, plotId) {
       logger.plots.info('Controlador - Parcela obtenida exitosamente', { userId, plotId })
     } else {
       logger.plots.warn('Controlador - Parcela no encontrada', { userId, plotId })
+      throw new NotFoundError('Plot not found')
     }
     return data
   } catch (error) {

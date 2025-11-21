@@ -96,4 +96,16 @@ logger.crops = {
   warn: (message, meta = {}) => logger.warn({ ...meta, context: 'CROPS', message })
 }
 
+logger.activities = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'ACTIVITIES', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'ACTIVITIES', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'ACTIVITIES', message })
+}
+
+logger.reports = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'REPORTS', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'REPORTS', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'REPORTS', message })
+}
+
 export { logger }
