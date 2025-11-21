@@ -4,6 +4,13 @@ import {
   validateLocationPlot,
   validateArea
 } from '../../middlewares/index.js'
+import {
+  ValidationError,
+  ConflictError,
+  NotFoundError,
+  InternalServerError
+} from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 function extractAndValidateCoordinates (plotData) {
   let lat, long
@@ -22,15 +29,18 @@ function extractAndValidateCoordinates (plotData) {
 
   // Validar que se obtuvieron coordenadas válidas
   if (lat === undefined || long === undefined || isNaN(lat) || isNaN(long)) {
-    throw new Error('Valid coordinates are required. Use either "lat" and "long" fields or "lat,long" format in location')
+    logger.plots.warn('Coordenadas inválidas en datos de parcela', { plotData })
+    throw new ValidationError('Valid coordinates are required. Use either "lat" and "long" fields or "lat,long" format in location')
   }
 
   // Validar rangos
   if (lat < -90 || lat > 90) {
-    throw new Error(`Invalid latitude: ${lat}. Must be between -90 and 90.`)
+    logger.plots.warn('Latitud fuera de rango', { lat })
+    throw new ValidationError(`Invalid latitude: ${lat}. Must be between -90 and 90.`)
   }
   if (long < -180 || long > 180) {
-    throw new Error(`Invalid longitude: ${long}. Must be between -180 and 180.`)
+    logger.plots.warn('Longitud fuera de rango', { long })
+    throw new ValidationError(`Invalid longitude: ${long}. Must be between -180 and 180.`)
   }
 
   return { lat, long }
@@ -54,18 +64,22 @@ function extractAndValidateCoordinates (plotData) {
 
 async function createPlot (userId, plot) {
   try {
+    logger.plots.info('Creando nueva parcela', { userId, plot })
+
     await validFieldsRegisterPlot(plot)
 
     const existingUserPlot = await getPlotByUserId(userId)
     if (existingUserPlot) {
-      throw new Error('User already has a plot')
+      logger.plots.warn('El usuario ya tiene una parcela registrada', { userId })
+      throw new ConflictError('User already has a plot')
     }
 
     await validateLocationPlot(plot.location)
     await validateArea(plot.area)
 
     if (!plot.lat || !plot.long) {
-      throw new Error('Latitude and Longitude are required')
+      logger.plots.warn('Faltan coordenadas en la parcela', { userId })
+      throw new ValidationError('Latitude and Longitude are required')
     }
 
     const { lat, long } = extractAndValidateCoordinates(plot)
@@ -82,10 +96,25 @@ async function createPlot (userId, plot) {
     }
 
     const result = await pool.query(registerQuery)
+
+    logger.plots.info('Parcela creada exitosamente', {
+      userId,
+      plotName: plot.plot_name
+    })
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error creating plot:', error)
-    throw error
+    logger.plots.error('Error creando parcela', {
+      userId,
+      error: error.message,
+      plotData: plot
+    })
+
+    // Re-lanzar errores personalizados, envolver otros en InternalServerError
+    if (error instanceof ValidationError || error instanceof ConflictError) {
+      throw error
+    }
+    throw new InternalServerError('Error creating plot', { original: error.message })
   }
 }
 
@@ -100,14 +129,26 @@ async function createPlot (userId, plot) {
 
 async function getPlotByUserId (userId) {
   try {
+    logger.plots.info('Obteniendo parcela por ID de usuario', { userId })
+
     const query = {
       text: 'SELECT u.*, p.plot_id FROM users u JOIN plots p ON u.user_id = p.user_id WHERE u.user_id = $1',
       values: [userId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.plots.info('Parcela encontrada para el usuario', { userId })
+    } else {
+      logger.plots.info('No se encontró parcela para el usuario', { userId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error getting plot by user ID:', error)
+    logger.plots.error('Error obteniendo parcela por ID de usuario', {
+      userId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -123,14 +164,26 @@ async function getPlotByUserId (userId) {
 
 async function getPlotbyId (plotId) {
   try {
+    logger.plots.info('Obteniendo parcela por ID', { plotId })
+
     const query = {
       text: 'SELECT * FROM plots WHERE plot_id = $1',
       values: [plotId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.plots.info('Parcela encontrada por ID', { plotId })
+    } else {
+      logger.plots.warn('Parcela no encontrada por ID', { plotId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error getting plot by ID:', error)
+    logger.plots.error('Error obteniendo parcela por ID', {
+      plotId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -148,17 +201,30 @@ async function getPlotbyId (plotId) {
 
 async function getPlotbyUserId (userId, plotId) {
   try {
+    logger.plots.info('Obteniendo parcela por ID de usuario y ID de parcela', { userId, plotId })
+
     const query = {
       text: `SELECT plot_id, user_id, plot_name, location, area, 
                     ST_X(geom) as longitude, ST_Y(geom) as latitude,
                     geom, is_active, created_at
              FROM plots WHERE plot_id = $1 AND user_id= $2`,
-      values: [userId, plotId]
+      values: [plotId, userId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.plots.info('Parcela encontrada por ID de usuario y ID de parcela', { userId, plotId })
+    } else {
+      logger.plots.warn('Parcela no encontrada por ID de usuario y ID de parcela', { userId, plotId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error getting plot by ID:', error)
+    logger.plots.error('Error obteniendo parcela por ID de usuario y ID de parcela', {
+      userId,
+      plotId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -174,13 +240,22 @@ async function getPlotbyUserId (userId, plotId) {
 
 async function getAllPlots () {
   try {
+    logger.plots.info('Obteniendo todas las parcelas')
+
     const query = {
       text: 'SELECT * FROM plots'
     }
     const result = await pool.query(query)
+
+    logger.plots.info('Todas las parcelas obtenidas exitosamente', {
+      total: result.rows.length
+    })
+
     return result.rows
   } catch (error) {
-    console.error('Error getting all plots:', error)
+    logger.plots.error('Error obteniendo todas las parcelas', {
+      error: error.message
+    })
     throw error
   }
 }
@@ -197,15 +272,26 @@ async function getAllPlots () {
 
 async function getUbicationCoords (userId) {
   try {
+    logger.plots.info('Obteniendo coordenadas de ubicación de parcela', { userId })
+
     const query = {
       text: `SELECT plot_id, user_id, plot_name,location, ST_X(geom) as lat, ST_Y(geom) as long, area FROM plots 
       WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
       values: [userId]
     }
     const result = await pool.query(query)
+
+    logger.plots.info('Coordenadas de ubicación obtenidas exitosamente', {
+      userId,
+      total: result.rows.length
+    })
+
     return result.rows
   } catch (error) {
-    console.error('Error getting ubication', error)
+    logger.plots.error('Error obteniendo coordenadas de ubicación', {
+      userId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -229,6 +315,8 @@ async function getUbicationCoords (userId) {
 
 async function updatePlotById (userId, plotId, plotData) {
   try {
+    logger.plots.info('Actualizando parcela por ID', { userId, plotId, plotData })
+
     await validFieldsRegisterPlot(plotData)
     await validateLocationPlot(plotData.location)
     await validateArea(plotData.area)
@@ -236,11 +324,13 @@ async function updatePlotById (userId, plotId, plotData) {
     // Validate that the user has a plot and that the plot exists
     const existingPlot = await getPlotbyId(plotId)
     if (!existingPlot) {
-      throw new Error('Plot not found')
+      logger.plots.warn('Parcela no encontrada para actualizar', { plotId })
+      throw new NotFoundError('Plot not found')
     }
 
     if (existingPlot.user_id !== userId) {
-      throw new Error('User does not own this plot')
+      logger.plots.warn('El usuario no es propietario de la parcela', { userId, plotId })
+      throw new ConflictError('User does not own this plot')
     }
 
     const { lat, long } = extractAndValidateCoordinates(plotData)
@@ -267,10 +357,21 @@ async function updatePlotById (userId, plotId, plotData) {
       values: [plotId]
     }
     const result = await pool.query(selectQuery)
+
+    logger.plots.info('Parcela actualizada exitosamente', { userId, plotId })
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error updating plot by ID:', error)
-    throw error
+    logger.plots.error('Error actualizando parcela por ID', {
+      userId,
+      plotId,
+      error: error.message
+    })
+
+    if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
+      throw error
+    }
+    throw new InternalServerError('Error updating plot by ID', { original: error.message })
   }
 }
 
@@ -291,13 +392,17 @@ async function updatePlotById (userId, plotId, plotData) {
 
 async function detelePlotById (userId, plotId) {
   try {
+    logger.plots.info('Eliminando parcela por ID', { userId, plotId })
+
     const existingPlot = await getPlotbyId(plotId)
     if (!existingPlot) {
-      throw new Error('Plot not found')
+      logger.plots.warn('Parcela no encontrada para eliminar', { plotId })
+      throw new NotFoundError('Plot not found')
     }
 
     if (existingPlot.user_id !== userId) {
-      throw new Error('User does not own this plot')
+      logger.plots.warn('El usuario no es propietario de la parcela para eliminar', { userId, plotId })
+      throw new ConflictError('User does not own this plot')
     }
 
     const query = {
@@ -305,9 +410,19 @@ async function detelePlotById (userId, plotId) {
       values: [userId, plotId]
     }
     await pool.query(query)
+
+    logger.plots.info('Parcela eliminada exitosamente', { userId, plotId })
   } catch (error) {
-    console.error('Error deleting plot by ID:', error)
-    throw error
+    logger.plots.error('Error eliminando parcela por ID', {
+      userId,
+      plotId,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError || error instanceof ConflictError) {
+      throw error
+    }
+    throw new InternalServerError('Error deleting plot by ID', { original: error.message })
   }
 }
 

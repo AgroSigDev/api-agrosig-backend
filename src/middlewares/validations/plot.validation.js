@@ -1,3 +1,6 @@
+import { ValidationError } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
+
 /**
  * Validates that the required fields for registering a plot are present.
  *
@@ -15,9 +18,13 @@ async function validFieldsRegisterPlot (plot) {
     !plot.location ||
     !plot.area
   ) {
-    console.error('Missing fields in plot registration:', plot)
-    throw new Error('There are missing fields to submit in the application')
+    logger.validation.warn('Campos faltantes en registro de parcela', {
+      camposRecibidos: Object.keys(plot),
+      camposFaltantes: ['plot_name', 'location', 'area'].filter(field => !plot[field])
+    })
+    throw new ValidationError('There are missing fields to submit in the application')
   }
+  logger.validation.info('Validación de campos de registro de parcela exitosa', { plot_name: plot.plot_name })
 }
 
 /**
@@ -33,8 +40,10 @@ async function validFieldsRegisterPlot (plot) {
 async function validateLocationPlot (location) {
   const locationRegex = /^[a-zA-Z0-9\s,.'-]{3,}$/
   if (!locationRegex.test(location)) {
-    throw new Error('Invalid location format')
+    logger.validation.warn('Formato de ubicación inválido', { location })
+    throw new ValidationError('Invalid location format')
   }
+  logger.validation.info('Validación de formato de ubicación exitosa', { location })
 }
 
 /**
@@ -54,11 +63,13 @@ async function validCoordinates (latitude, longitude) {
   const lat = parseFloat(latitude)
   const lon = parseFloat(longitude)
   if (lat < -90 || lat > 90) {
-    throw new Error('Invalid latitude')
+    logger.validation.warn('Latitud inválida', { latitude: lat })
+    throw new ValidationError('Invalid latitude')
   }
 
   if (lon < -180 || lon > 180) {
-    throw new Error('Invalid longitude')
+    logger.validation.warn('Longitud inválida', { longitude: lon })
+    throw new ValidationError('Invalid longitude')
   }
   return !isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
 }
@@ -74,8 +85,10 @@ async function validCoordinates (latitude, longitude) {
 
 async function validateArea (area) {
   if (isNaN(area) || area <= 0) {
-    throw new Error('Area must be a positive number')
+    logger.validation.warn('Área inválida', { area })
+    throw new ValidationError('Area must be a positive number')
   }
+  logger.validation.info('Validación de área exitosa', { area })
 }
 
 export {

@@ -1,5 +1,12 @@
 import { pool } from '../../lib/db.js'
 import { validFieldsRegisterCrop } from '../../middlewares/index.js'
+import {
+  ValidationError,
+  ConflictError,
+  NotFoundError,
+  InternalServerError
+} from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 /**
  * Creates a new crop record for a user and plot.
@@ -22,20 +29,24 @@ import { validFieldsRegisterCrop } from '../../middlewares/index.js'
 
 async function createCrop (userId, plotId, crop) {
   try {
+    logger.crops.info('Creando nuevo cultivo', { userId, plotId, crop })
+
     await validFieldsRegisterCrop(crop)
 
     // Si no se proporciona plotId, obtener la parcela por defecto
     if (!plotId) {
       const defaultPlot = await getDefaultPlotByUserId(userId)
       if (!defaultPlot) {
-        throw new Error('The user does not have an active plot')
+        logger.crops.warn('El usuario no tiene una parcela activa', { userId })
+        throw new NotFoundError('The user does not have an active plot')
       }
       plotId = defaultPlot.plot_id
     } else {
       // Validar que el plot_id proporcionado pertenezca al usuario
       const existingPlot = await validateUserPlot(userId, plotId)
       if (!existingPlot) {
-        throw new Error('The plot does not belong to the user or is not active')
+        logger.crops.warn('La parcela no pertenece al usuario o no está activa', { userId, plotId })
+        throw new ConflictError('The plot does not belong to the user or is not active')
       }
     }
 
@@ -53,10 +64,27 @@ async function createCrop (userId, plotId, crop) {
     }
 
     const result = await pool.query(registerQuery)
+
+    logger.crops.info('Cultivo creado exitosamente', {
+      userId,
+      cropId: result.rows[0].crop_id,
+      cropType: crop.crop_type
+    })
+
     return result.rows[0]
   } catch (error) {
-    console.log('Error creating crop: ', error)
-    throw error
+    logger.crops.error('Error creando cultivo', {
+      userId,
+      plotId,
+      error: error.message,
+      cropData: crop
+    })
+
+    // Re-lanzar errores personalizados, envolver otros en InternalServerError
+    if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
+      throw error
+    }
+    throw new InternalServerError('Error creating crop', { original: error.message })
   }
 }
 
@@ -83,19 +111,23 @@ async function createCrop (userId, plotId, crop) {
 
 async function updateCropByUserId (userId, cropId, cropData) {
   try {
+    logger.crops.info('Actualizando cultivo por ID', { userId, cropId, cropData })
+
     await validFieldsRegisterCrop(cropData)
 
     // validate crop ownership and existence
     const existingCrop = await getCropByIdAndUserId(cropId, userId)
     if (!existingCrop) {
-      throw new Error('Crop not found or does not belong to the user')
+      logger.crops.warn('Cultivo no encontrado o no pertenece al usuario', { userId, cropId })
+      throw new NotFoundError('Crop not found or does not belong to the user')
     }
 
     // Validate it belongs to the user
     if (cropData.plot_id) {
       const validPlot = await validateUserPlot(userId, cropData.plot_id)
       if (!validPlot) {
-        throw new Error('The plot does not belong to the user')
+        logger.crops.warn('La parcela no pertenece al usuario', { userId, plotId: cropData.plot_id })
+        throw new ConflictError('The plot does not belong to the user')
       }
     }
 
@@ -109,14 +141,24 @@ async function updateCropByUserId (userId, cropId, cropData) {
         cropData.plot_id || existingCrop.plot_id,
         cropId,
         userId
-        // cropData.crop_id
       ]
     }
     const result = await pool.query(query)
+
+    logger.crops.info('Cultivo actualizado exitosamente', { userId, cropId })
+
     return result.rows[0]
   } catch (error) {
-    console.log('Error updating crop: ', error)
-    throw error
+    logger.crops.error('Error actualizando cultivo', {
+      userId,
+      cropId,
+      error: error.message
+    })
+
+    if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
+      throw error
+    }
+    throw new InternalServerError('Error updating crop', { original: error.message })
   }
 }
 
@@ -132,14 +174,26 @@ async function updateCropByUserId (userId, cropId, cropData) {
 
 async function getCropById (cropId) {
   try {
+    logger.crops.info('Obteniendo cultivo por ID', { cropId })
+
     const query = {
       text: 'SELECT * FROM crop WHERE crop_id = $1',
       values: [cropId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.crops.info('Cultivo encontrado por ID', { cropId })
+    } else {
+      logger.crops.warn('Cultivo no encontrado por ID', { cropId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.log('Error getting crop by ID: ', error)
+    logger.crops.error('Error obteniendo cultivo por ID', {
+      cropId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -158,6 +212,8 @@ async function getCropById (cropId) {
 
 async function getCropsByUserId (userId, page = 1, limit = 10) {
   try {
+    logger.crops.info('Obteniendo cultivos por ID de usuario', { userId, page, limit })
+
     const offset = (page - 1) * limit
 
     const query = {
@@ -165,9 +221,22 @@ async function getCropsByUserId (userId, page = 1, limit = 10) {
       values: [userId, limit, offset]
     }
     const result = await pool.query(query)
+
+    logger.crops.info('Cultivos obtenidos exitosamente', {
+      userId,
+      total: result.rows.length,
+      page,
+      limit
+    })
+
     return result.rows
   } catch (error) {
-    console.log('Error getting crops by user ID: ', error)
+    logger.crops.error('Error obteniendo cultivos por ID de usuario', {
+      userId,
+      page,
+      limit,
+      error: error.message
+    })
     throw error
   }
 }
@@ -184,14 +253,23 @@ async function getCropsByUserId (userId, page = 1, limit = 10) {
 
 async function getTotalCropsByUserId (userId) {
   try {
+    logger.crops.info('Obteniendo total de cultivos por ID de usuario', { userId })
+
     const query = {
       text: 'SELECT COUNT(*) FROM crop WHERE user_id = $1 AND is_active = true',
       values: [userId]
     }
     const result = await pool.query(query)
-    return parseInt(result.rows[0].count)
+    const total = parseInt(result.rows[0].count)
+
+    logger.crops.info('Total de cultivos obtenido exitosamente', { userId, total })
+
+    return total
   } catch (error) {
-    console.log('Error getting total crops: ', error)
+    logger.crops.error('Error obteniendo total de cultivos', {
+      userId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -210,16 +288,20 @@ async function getTotalCropsByUserId (userId) {
 
 async function deleteCropByUserId (userId, cropId) {
   try {
+    logger.crops.info('Eliminando cultivo por ID', { userId, cropId })
+
     // Validar que el usuario tenga cultivo
     const existingCrop = await getCropByIdAndUserId(cropId, userId)
     if (!existingCrop) {
-      throw new Error('Crop not found or does not belong to the user')
+      logger.crops.warn('Cultivo no encontrado o no pertenece al usuario', { userId, cropId })
+      throw new NotFoundError('Crop not found or does not belong to the user')
     }
 
     // Validar que el cultivo este activo
     const isActive = existingCrop.is_active
     if (!isActive) {
-      throw new Error('Crop is not active')
+      logger.crops.warn('Cultivo no está activo', { userId, cropId })
+      throw new ConflictError('Crop is not active')
     }
 
     // Eliminar el cultivo
@@ -228,9 +310,19 @@ async function deleteCropByUserId (userId, cropId) {
       values: [cropId, userId]
     }
     await pool.query(deleteQuery)
+
+    logger.crops.info('Cultivo eliminado exitosamente', { userId, cropId })
   } catch (error) {
-    console.log('Error deleting crop: ', error)
-    throw error
+    logger.crops.error('Error eliminando cultivo', {
+      userId,
+      cropId,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError || error instanceof ConflictError) {
+      throw error
+    }
+    throw new InternalServerError('Error deleting crop', { original: error.message })
   }
 }
 
@@ -247,14 +339,27 @@ async function deleteCropByUserId (userId, cropId) {
 
 async function getCropByIdAndUserId (cropId, userId) {
   try {
+    logger.crops.info('Obteniendo cultivo por ID y ID de usuario', { cropId, userId })
+
     const query = {
       text: 'SELECT * FROM crop WHERE crop_id = $1 AND user_id = $2 AND is_active = true',
       values: [cropId, userId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.crops.info('Cultivo encontrado por ID y ID de usuario', { cropId, userId })
+    } else {
+      logger.crops.warn('Cultivo no encontrado por ID y ID de usuario', { cropId, userId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.log('Error getting crop by ID: ', error)
+    logger.crops.error('Error obteniendo cultivo por ID y ID de usuario', {
+      cropId,
+      userId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -272,14 +377,26 @@ async function getCropByIdAndUserId (cropId, userId) {
 
 async function getDefaultPlotByUserId (userId) {
   try {
+    logger.crops.info('Obteniendo parcela por defecto por ID de usuario', { userId })
+
     const query = {
       text: 'SELECT plot_id FROM plots WHERE user_id = $1 AND is_active = true ORDER BY plot_id LIMIT 1',
       values: [userId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.crops.info('Parcela por defecto encontrada', { userId, plotId: result.rows[0].plot_id })
+    } else {
+      logger.crops.warn('No se encontró parcela por defecto para el usuario', { userId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.log('Error getting default plot: ', error)
+    logger.crops.error('Error obteniendo parcela por defecto', {
+      userId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -297,14 +414,27 @@ async function getDefaultPlotByUserId (userId) {
 
 async function validateUserPlot (userId, plotId) {
   try {
+    logger.crops.info('Validando parcela de usuario', { userId, plotId })
+
     const query = {
       text: 'SELECT plot_id FROM plots WHERE user_id = $1 AND plot_id = $2 AND is_active = true LIMIT 1',
       values: [userId, plotId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.crops.info('Parcela validada exitosamente', { userId, plotId })
+    } else {
+      logger.crops.warn('Parcela no válida para el usuario', { userId, plotId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.log('Error validating user plot: ', error)
+    logger.crops.error('Error validando parcela de usuario', {
+      userId,
+      plotId,
+      error: error.message
+    })
     throw error
   }
 }

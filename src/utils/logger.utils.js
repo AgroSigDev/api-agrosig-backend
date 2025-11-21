@@ -48,7 +48,7 @@ const logger = createLogger({
   ]
 })
 
-// 🎭 Métodos helper por contexto - AGREGAR warn A TODOS
+// 🎭 Métodos helper por contexto
 logger.auth = {
   info: (message, meta = {}) => logger.info({ ...meta, context: 'AUTH', message }),
   error: (message, meta = {}) => logger.error({ ...meta, context: 'AUTH', message }),
@@ -77,6 +77,23 @@ logger.users = {
   info: (message, meta = {}) => logger.info({ ...meta, context: 'USERS', message }),
   error: (message, meta = {}) => logger.error({ ...meta, context: 'USERS', message }),
   warn: (message, meta = {}) => logger.warn({ ...meta, context: 'USERS', message })
+}
+
+logger.plots = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'PLOTS', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'PLOTS', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'PLOTS', message })
+}
+logger.weather = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'WEATHER', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'WEATHER', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'WEATHER', message })
+}
+
+logger.crops = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'CROPS', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'CROPS', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'CROPS', message })
 }
 
 export { logger }
