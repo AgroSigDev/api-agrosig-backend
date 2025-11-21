@@ -108,4 +108,10 @@ logger.reports = {
   warn: (message, meta = {}) => logger.warn({ ...meta, context: 'REPORTS', message })
 }
 
+logger.production = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'PRODUCTION', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'PRODUCTION', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'PRODUCTION', message })
+}
+
 export { logger }
