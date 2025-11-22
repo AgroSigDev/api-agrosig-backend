@@ -49,8 +49,8 @@ setupSwagger(app)
 app.use('/uploads/profile', express.static(path.join(__dirname, 'uploads/profile')))
 
 // Rutas - Endpoints
-app.use('/users', userRouter)
 app.use('/auth', authRouter)
+app.use('/users', userRouter)
 app.use('/plots', plotRouter)
 app.use('/weather', weatherPlotRouter)
 app.use('/crop', cropRouter)

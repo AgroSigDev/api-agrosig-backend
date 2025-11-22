@@ -23,7 +23,16 @@ if (!admin.apps.length) {
 
 const messaging = admin.messaging()
 
+/**
+ * Service class for handling Firebase Cloud Messaging (FCM) operations.
+ * Provides methods for sending notifications, managing FCM tokens, and handling errors.
+ */
 class FirebaseService {
+  /**
+   * Sanitizes data object by converting all values to strings and handling null/undefined values.
+   * @param {object} data - The data object to sanitize.
+   * @returns {object} The sanitized data object with all values as strings.
+   */
   sanitizeData (data) {
     const sanitized = {}
     for (const [key, value] of Object.entries(data || {})) {
@@ -37,6 +46,15 @@ class FirebaseService {
     return sanitized
   }
 
+  /**
+   * Sends a push notification to a specific FCM token.
+   * @param {string} token - The FCM registration token of the device.
+   * @param {string} title - The title of the notification.
+   * @param {string} body - The body message of the notification.
+   * @param {object} [data={}] - Additional data to send with the notification.
+   * @returns {Promise<string>} The message ID from FCM.
+   * @throws {Error} If there's an error sending the notification.
+   */
   async sendNotification (token, title, body, data = {}) {
     try {
       const message = {
@@ -65,6 +83,15 @@ class FirebaseService {
     }
   }
 
+  /**
+   * Sends a push notification to all FCM tokens registered for a specific user.
+   * @param {number} userId - The ID of the user to send the notification to.
+   * @param {string} title - The title of the notification.
+   * @param {string} body - The body message of the notification.
+   * @param {object} [data={}] - Additional data to send with the notification.
+   * @returns {Promise<Array>} Array of PromiseSettledResult objects for each token.
+   * @throws {Error} If there's an error sending the notifications.
+   */
   async sendToUser (userId, title, body, data = {}) {
     try {
       const tokens = await this.getUserTokens(userId)
@@ -107,20 +134,45 @@ class FirebaseService {
     }
   }
 
+  /**
+   * Retrieves all FCM tokens registered for a specific user.
+   * @param {number} userId - The ID of the user.
+   * @returns {Promise<Array<string>>} Array of FCM tokens for the user.
+   */
   async getUserTokens (userId) {
     const tokens = await FCM.getUserFCMTokens(userId)
     return tokens.map(t => t.fcm_token)
   }
 
+  /**
+   * Registers a new FCM token for a user.
+   * @param {number} userId - The ID of the user.
+   * @param {string} token - The FCM registration token.
+   * @param {string} [deviceType='mobile'] - The type of device (e.g., 'mobile', 'web').
+   * @returns {Promise<void>}
+   */
   async registerToken (userId, token, deviceType = 'mobile') {
     await FCM.registerFCMToken(userId, token, deviceType)
   }
 
+  /**
+   * Removes an invalid FCM token from the database.
+   * @param {string} token - The invalid FCM token to remove.
+   * @returns {Promise<void>}
+   */
   async removeInvalidToken (token) {
     await pool.query('DELETE FROM user_fcm_tokens WHERE fcm_token = $1', [token])
     console.log(`Token inválido eliminado: ${token}`)
   }
 
+  /**
+   * Logs a failed notification attempt to the database.
+   * @param {string} token - The FCM token that failed.
+   * @param {string} title - The title of the notification.
+   * @param {string} body - The body of the notification.
+   * @param {Error} error - The error that occurred.
+   * @returns {Promise<void>}
+   */
   async logFailedNotification (token, title, body, error) {
     try {
       await pool.query(

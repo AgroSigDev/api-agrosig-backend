@@ -1,4 +1,6 @@
 import { pool } from '../../lib/db.js'
+import { InternalServerError, NotFoundError } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 /**
  * Obtiene las notificaciones de un usuario con paginación y filtro de no leídas.
@@ -14,6 +16,13 @@ import { pool } from '../../lib/db.js'
  */
 async function getNotificationsByUserId (userId, limit = 20, offset = 0, unreadOnly = false) {
   try {
+    logger.notifications.info('Obteniendo notificaciones del usuario', {
+      userId,
+      limit,
+      offset,
+      unreadOnly
+    })
+
     let query = `
       SELECT 
         notification_id,
@@ -42,10 +51,17 @@ async function getNotificationsByUserId (userId, limit = 20, offset = 0, unreadO
     values.push(parseInt(limit), parseInt(offset))
 
     const result = await pool.query(query, values)
+    logger.notifications.info('Notificaciones obtenidas exitosamente', {
+      userId,
+      total: result.rows.length
+    })
     return result.rows
   } catch (error) {
-    console.error('Error getting notifications:', error)
-    throw error
+    logger.notifications.error('Error obteniendo notificaciones', {
+      userId,
+      error: error.message
+    })
+    throw new InternalServerError('Error getting notifications', { original: error.message })
   }
 }
 
@@ -61,16 +77,42 @@ async function getNotificationsByUserId (userId, limit = 20, offset = 0, unreadO
  */
 async function markNotificationAsRead (userId, notificationId) {
   try {
+    logger.notifications.info('Marcando notificación como leída', {
+      userId,
+      notificationId
+    })
+
     const query = {
       text: 'UPDATE notifications SET is_read = true WHERE notification_id = $1 AND user_id = $2',
       values: [notificationId, userId]
     }
 
     const result = await pool.query(query)
+
+    if (result.rowCount === 0) {
+      logger.notifications.warn('Notificación no encontrada para marcar como leída', {
+        userId,
+        notificationId
+      })
+      throw new NotFoundError('Notification not found')
+    }
+
+    logger.notifications.info('Notificación marcada como leída exitosamente', {
+      userId,
+      notificationId
+    })
     return result
   } catch (error) {
-    console.error('Error marking notification as read:', error)
-    throw error
+    logger.notifications.error('Error marcando notificación como leída', {
+      userId,
+      notificationId,
+      error: error.message
+    })
+
+    if (error instanceof NotFoundError) {
+      throw error
+    }
+    throw new InternalServerError('Error marking notification as read', { original: error.message })
   }
 }
 
@@ -85,16 +127,25 @@ async function markNotificationAsRead (userId, notificationId) {
  */
 async function markAllNotificationsAsRead (userId) {
   try {
+    logger.notifications.info('Marcando todas las notificaciones como leídas', { userId })
+
     const query = {
       text: 'UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false',
       values: [userId]
     }
 
     const result = await pool.query(query)
+    logger.notifications.info('Todas las notificaciones marcadas como leídas exitosamente', {
+      userId,
+      updatedCount: result.rowCount
+    })
     return result
   } catch (error) {
-    console.error('Error marking all notifications as read:', error)
-    throw error
+    logger.notifications.error('Error marcando todas las notificaciones como leídas', {
+      userId,
+      error: error.message
+    })
+    throw new InternalServerError('Error marking all notifications as read', { original: error.message })
   }
 }
 
@@ -109,16 +160,26 @@ async function markAllNotificationsAsRead (userId) {
  */
 async function getUnreadCountByUserId (userId) {
   try {
+    logger.notifications.info('Obteniendo conteo de notificaciones no leídas', { userId })
+
     const query = {
       text: 'SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false',
       values: [userId]
     }
 
     const result = await pool.query(query)
-    return parseInt(result.rows[0].count)
+    const count = parseInt(result.rows[0].count)
+    logger.notifications.info('Conteo de no leídas obtenido exitosamente', {
+      userId,
+      count
+    })
+    return count
   } catch (error) {
-    console.error('Error getting unread count:', error)
-    throw error
+    logger.notifications.error('Error obteniendo conteo de no leídas', {
+      userId,
+      error: error.message
+    })
+    throw new InternalServerError('Error getting unread count', { original: error.message })
   }
 }
 

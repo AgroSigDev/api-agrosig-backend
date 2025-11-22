@@ -120,4 +120,16 @@ logger.comments = {
   warn: (message, meta = {}) => logger.warn({ ...meta, context: 'COMMENTS', message })
 }
 
+logger.fcm = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'FCM', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'FCM', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'FCM', message })
+}
+
+logger.notifications = {
+  info: (message, meta = {}) => logger.info({ ...meta, context: 'NOTIFICATIONS', message }),
+  error: (message, meta = {}) => logger.error({ ...meta, context: 'NOTIFICATIONS', message }),
+  warn: (message, meta = {}) => logger.warn({ ...meta, context: 'NOTIFICATIONS', message })
+}
+
 export { logger }

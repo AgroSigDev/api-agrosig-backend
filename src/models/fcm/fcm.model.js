@@ -1,4 +1,9 @@
 import { pool } from '../../lib/db.js'
+import {
+  ValidationError,
+  InternalServerError
+} from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 /**
  * Registra o actualiza un token FCM para un usuario.
@@ -13,6 +18,12 @@ import { pool } from '../../lib/db.js'
  */
 async function registerFCMToken (userId, fcmToken, deviceType = 'mobile') {
   try {
+    logger.fcm.info('Registrando token FCM', { userId, deviceType })
+
+    if (!fcmToken || fcmToken.trim() === '') {
+      throw new ValidationError('FCM token is required')
+    }
+
     const query = {
       text: `INSERT INTO user_fcm_tokens (user_id, fcm_token, device_type) 
              VALUES ($1, $2, $3) 
@@ -22,10 +33,19 @@ async function registerFCMToken (userId, fcmToken, deviceType = 'mobile') {
     }
 
     const result = await pool.query(query)
+    logger.fcm.info('Token FCM registrado exitosamente', { userId, deviceType })
     return result
   } catch (error) {
-    console.error('Error registering FCM token in model:', error)
-    throw error
+    logger.fcm.error('Error registrando token FCM', {
+      userId,
+      error: error.message,
+      deviceType
+    })
+
+    if (error instanceof ValidationError) {
+      throw error
+    }
+    throw new InternalServerError('Error registering FCM token', { original: error.message })
   }
 }
 
@@ -41,16 +61,31 @@ async function registerFCMToken (userId, fcmToken, deviceType = 'mobile') {
  */
 async function unregisterFCMToken (userId, fcmToken) {
   try {
+    logger.fcm.info('Eliminando token FCM', { userId, fcmToken })
+
+    if (!fcmToken || fcmToken.trim() === '') {
+      throw new ValidationError('FCM token is required')
+    }
+
     const query = {
       text: 'DELETE FROM user_fcm_tokens WHERE user_id = $1 AND fcm_token = $2',
       values: [userId, fcmToken]
     }
 
     const result = await pool.query(query)
+    logger.fcm.info('Token FCM eliminado exitosamente', { userId, fcmToken })
     return result
   } catch (error) {
-    console.error('Error unregistering FCM token in model:', error)
-    throw error
+    logger.fcm.error('Error eliminando token FCM', {
+      userId,
+      fcmToken,
+      error: error.message
+    })
+
+    if (error instanceof ValidationError) {
+      throw error
+    }
+    throw new InternalServerError('Error unregistering FCM token', { original: error.message })
   }
 }
 
@@ -65,16 +100,25 @@ async function unregisterFCMToken (userId, fcmToken) {
  */
 async function getUserFCMTokens (userId) {
   try {
+    logger.fcm.info('Obteniendo tokens FCM del usuario', { userId })
+
     const query = {
       text: 'SELECT fcm_token, device_type, created_at, updated_at FROM user_fcm_tokens WHERE user_id = $1',
       values: [userId]
     }
 
     const result = await pool.query(query)
+    logger.fcm.info('Tokens FCM obtenidos exitosamente', {
+      userId,
+      total: result.rows.length
+    })
     return result.rows
   } catch (error) {
-    console.error('Error getting user FCM tokens:', error)
-    throw error
+    logger.fcm.error('Error obteniendo tokens FCM', {
+      userId,
+      error: error.message
+    })
+    throw new InternalServerError('Error getting user FCM tokens', { original: error.message })
   }
 }
 
@@ -90,16 +134,24 @@ async function getUserFCMTokens (userId) {
  */
 async function checkFCMTokenExists (userId, fcmToken) {
   try {
+    logger.fcm.info('Verificando existencia de token FCM', { userId, fcmToken })
+
     const query = {
       text: 'SELECT 1 FROM user_fcm_tokens WHERE user_id = $1 AND fcm_token = $2',
       values: [userId, fcmToken]
     }
 
     const result = await pool.query(query)
-    return result.rows.length > 0
+    const exists = result.rows.length > 0
+    logger.fcm.info('Verificación de token FCM completada', { userId, fcmToken, exists })
+    return exists
   } catch (error) {
-    console.error('Error checking FCM token existence:', error)
-    throw error
+    logger.fcm.error('Error verificando token FCM', {
+      userId,
+      fcmToken,
+      error: error.message
+    })
+    throw new InternalServerError('Error checking FCM token existence', { original: error.message })
   }
 }
 
