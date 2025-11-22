@@ -9,7 +9,9 @@ import { logger } from '../../utils/logger.utils.js'
 
 const router = express.Router()
 
-// GET /users/
+// === ENDPOINTS PARA ADMINISTRADORES (SOLO ADMIN) === //
+
+// GET /users/ - Obtener todos los usuarios
 router.get('/', autenticate, authorize(['admin']), async (request, response, next) => {
   const startTime = Date.now()
 
@@ -44,22 +46,23 @@ router.get('/', autenticate, authorize(['admin']), async (request, response, nex
   }
 })
 
-// GET /users/get-user/:id
-router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
+// GET /users/:id - Obtener cualquier usuario por ID
+router.get('/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   const startTime = Date.now()
 
   try {
     const userId = request.params.id
 
-    logger.api.info('Solicitud de obtención de usuario propio', {
-      userId,
+    logger.api.info('Solicitud de obtención de usuario por ID (Admin)', {
+      targetUserId: userId,
+      adminUserId: request.user.user_id,
       ip: request.ip,
       userAgent: request.get('User-Agent')
     })
 
     const result = await getUserById(userId)
     if (!result) {
-      logger.api.warn('Usuario propio no encontrado', { userId })
+      logger.api.warn('Usuario no encontrado (Admin)', { userId })
       return response.status(404).json({
         success: false,
         message: 'Usuario no encontrado'
@@ -68,8 +71,9 @@ router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (re
 
     const responseTime = Date.now() - startTime
 
-    logger.api.info('Usuario propio obtenido exitosamente', {
-      userId,
+    logger.api.info('Usuario obtenido exitosamente (Admin)', {
+      targetUserId: userId,
+      adminUserId: request.user.user_id,
       responseTime: `${responseTime}ms`
     })
 
@@ -79,8 +83,9 @@ router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (re
     })
   } catch (error) {
     const responseTime = Date.now() - startTime
-    logger.api.error('Error en endpoint de obtención de usuario propio', {
-      userId: request.user?.user_id,
+    logger.api.error('Error en endpoint de obtención de usuario (Admin)', {
+      targetUserId: request.params?.id,
+      adminUserId: request.user?.user_id,
       responseTime: `${responseTime}ms`,
       error: error.message
     })
@@ -88,17 +93,18 @@ router.get('/get-user/:id', autenticate, authorize(['admin', 'user']), async (re
   }
 })
 
-// PATCH /users/update-profile/:id
-router.patch('/update-profile/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
+// PATCH /users/:id - Actualizar cualquier usuario
+router.patch('/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   const startTime = Date.now()
 
   try {
-    const userId = request.user.user_id
+    const userId = request.params.id
     const userData = request.body
 
-    logger.api.info('Solicitud de actualización de perfil', {
-      userId,
+    logger.api.info('Solicitud de actualización de usuario (Admin)', {
+      targetUserId: userId,
       camposActualizados: Object.keys(userData),
+      adminUserId: request.user.user_id,
       ip: request.ip,
       userAgent: request.get('User-Agent')
     })
@@ -106,8 +112,9 @@ router.patch('/update-profile/:id', autenticate, authorize(['admin', 'user']), a
     const result = await updateUserById(userId, userData)
     const responseTime = Date.now() - startTime
 
-    logger.api.info('Perfil actualizado exitosamente', {
-      userId,
+    logger.api.info('Usuario actualizado exitosamente (Admin)', {
+      targetUserId: userId,
+      adminUserId: request.user.user_id,
       responseTime: `${responseTime}ms`
     })
 
@@ -117,8 +124,9 @@ router.patch('/update-profile/:id', autenticate, authorize(['admin', 'user']), a
     })
   } catch (error) {
     const responseTime = Date.now() - startTime
-    logger.api.error('Error en endpoint de actualización de perfil', {
-      userId: request.user?.user_id,
+    logger.api.error('Error en endpoint de actualización de usuario (Admin)', {
+      targetUserId: request.params?.id,
+      adminUserId: request.user?.user_id,
       responseTime: `${responseTime}ms`,
       error: error.message
     })
@@ -126,118 +134,7 @@ router.patch('/update-profile/:id', autenticate, authorize(['admin', 'user']), a
   }
 })
 
-// PATCH /users/update-password/:id
-router.patch('/update-password/:id', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
-  const startTime = Date.now()
-
-  try {
-    const userId = request.user.user_id
-    const { oldPassword, newPassword, repeatedPassword } = request.body
-
-    logger.api.info('Solicitud de actualización de contraseña', {
-      userId,
-      ip: request.ip,
-      userAgent: request.get('User-Agent')
-    })
-
-    const result = await updateUserPassword(userId, oldPassword, newPassword, repeatedPassword)
-    const responseTime = Date.now() - startTime
-
-    logger.api.info('Contraseña actualizada exitosamente', {
-      userId,
-      responseTime: `${responseTime}ms`
-    })
-
-    response.status(200).json({
-      success: true,
-      data: {
-        message: 'Password updated successfully',
-        user: result
-      }
-    })
-  } catch (error) {
-    const responseTime = Date.now() - startTime
-    logger.api.error('Error en endpoint de actualización de contraseña', {
-      userId: request.user?.user_id,
-      responseTime: `${responseTime}ms`,
-      error: error.message
-    })
-    next(error)
-  }
-})
-
-// PATCH /users/image/:id
-router.patch('/image/:id', autenticate, authorize(['admin', 'user']), uploadProfile, async (request, response, next) => {
-  const startTime = Date.now()
-
-  try {
-    const userId = request.user.user_id
-
-    if (!request.file) {
-      logger.api.warn('Intento de actualizar imagen sin archivo', { userId })
-      throw new BadRequestError('No se ha proporcionado ninguna imagen')
-    }
-
-    const imageFileName = request.file.filename
-
-    logger.api.info('Solicitud de actualización de imagen de perfil', {
-      userId,
-      imageFileName,
-      ip: request.ip,
-      userAgent: request.get('User-Agent')
-    })
-
-    const updatedUser = await updateImageUserById(userId, imageFileName)
-
-    // Eliminar la imagen anterior si existe
-    if (updatedUser.oldImagePath) {
-      const fullPath = path.join(process.cwd(), 'src/uploads/profile', updatedUser.oldImagePath)
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath)
-        logger.api.info('Imagen anterior eliminada del sistema de archivos', {
-          userId,
-          oldImagePath: updatedUser.oldImagePath
-        })
-      }
-    }
-
-    const responseTime = Date.now() - startTime
-
-    logger.api.info('Imagen de perfil actualizada exitosamente', {
-      userId,
-      responseTime: `${responseTime}ms`
-    })
-
-    response.status(200).json({
-      success: true,
-      message: 'Imagen de usuario actualizada correctamente',
-      data: {
-        imageUrl: `/uploads/profile/${imageFileName}`
-      }
-    })
-  } catch (error) {
-    // Eliminar la imagen recién subida si hay error
-    if (request.file) {
-      const fullPath = path.join(process.cwd(), request.file.path)
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath)
-        logger.api.info('Imagen subida eliminada por error en el proceso', {
-          filename: request.file.filename
-        })
-      }
-    }
-
-    const responseTime = Date.now() - startTime
-    logger.api.error('Error en endpoint de actualización de imagen', {
-      userId: request.user?.user_id,
-      responseTime: `${responseTime}ms`,
-      error: error.message
-    })
-    next(error)
-  }
-})
-
-// PATCH /users/update-role/:id
+// PATCH /users/update-role/:id - Actualizar rol de usuario
 router.patch('/update-role/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   const startTime = Date.now()
 
@@ -279,7 +176,7 @@ router.patch('/update-role/:id', autenticate, authorize(['admin']), async (reque
   }
 })
 
-// PATCH /users/update-status/:id
+// PATCH /users/update-status/:id - Actualizar estado de usuario
 router.patch('/update-status/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   const startTime = Date.now()
 
@@ -321,7 +218,7 @@ router.patch('/update-status/:id', autenticate, authorize(['admin']), async (req
   }
 })
 
-// DELETE /users/:id
+// DELETE /users/delete-user/:id - Eliminar usuario
 router.delete('/delete-user/:id', autenticate, authorize(['admin']), async (request, response, next) => {
   const startTime = Date.now()
 
@@ -329,7 +226,8 @@ router.delete('/delete-user/:id', autenticate, authorize(['admin']), async (requ
     const userId = request.params.id
 
     logger.api.info('Solicitud de eliminación de usuario', {
-      userId,
+      targetUserId: userId,
+      adminUserId: request.user.user_id,
       ip: request.ip,
       userAgent: request.get('User-Agent')
     })
@@ -338,7 +236,8 @@ router.delete('/delete-user/:id', autenticate, authorize(['admin']), async (requ
     const responseTime = Date.now() - startTime
 
     logger.api.info('Usuario eliminado exitosamente', {
-      userId,
+      targetUserId: userId,
+      adminUserId: request.user.user_id,
       responseTime: `${responseTime}ms`
     })
 
@@ -349,6 +248,202 @@ router.delete('/delete-user/:id', autenticate, authorize(['admin']), async (requ
   } catch (error) {
     const responseTime = Date.now() - startTime
     logger.api.error('Error en endpoint de eliminación de usuario', {
+      targetUserId: request.params?.id,
+      adminUserId: request.user?.user_id,
+      responseTime: `${responseTime}ms`,
+      error: error.message
+    })
+    next(error)
+  }
+})
+
+// === ENDPOINTS PARA USUARIOS NORMALES (ADMIN Y USER) === //
+
+// GET /users/profile/me - Obtener perfil propio
+router.get('/profile/me', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
+  const startTime = Date.now()
+
+  try {
+    const userId = request.user.user_id
+
+    logger.api.info('Solicitud de obtención de perfil propio', {
+      userId,
+      ip: request.ip,
+      userAgent: request.get('User-Agent')
+    })
+
+    const result = await getUserById(userId)
+    if (!result) {
+      logger.api.warn('Usuario propio no encontrado', { userId })
+      return response.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      })
+    }
+
+    const responseTime = Date.now() - startTime
+
+    logger.api.info('Perfil propio obtenido exitosamente', {
+      userId,
+      responseTime: `${responseTime}ms`
+    })
+
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    logger.api.error('Error en endpoint de obtención de perfil propio', {
+      userId: request.user?.user_id,
+      responseTime: `${responseTime}ms`,
+      error: error.message
+    })
+    next(error)
+  }
+})
+
+// PATCH /users/profile/me - Actualizar perfil propio
+router.patch('/profile/me', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
+  const startTime = Date.now()
+
+  try {
+    const userId = request.user.user_id
+    const userData = request.body
+
+    logger.api.info('Solicitud de actualización de perfil propio', {
+      userId,
+      camposActualizados: Object.keys(userData),
+      ip: request.ip,
+      userAgent: request.get('User-Agent')
+    })
+
+    const result = await updateUserById(userId, userData)
+    const responseTime = Date.now() - startTime
+
+    logger.api.info('Perfil propio actualizado exitosamente', {
+      userId,
+      responseTime: `${responseTime}ms`
+    })
+
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    logger.api.error('Error en endpoint de actualización de perfil propio', {
+      userId: request.user?.user_id,
+      responseTime: `${responseTime}ms`,
+      error: error.message
+    })
+    next(error)
+  }
+})
+
+// PATCH /users/password/me - Actualizar contraseña propia
+router.patch('/password/me', autenticate, authorize(['admin', 'user']), async (request, response, next) => {
+  const startTime = Date.now()
+
+  try {
+    const userId = request.user.user_id
+    const { oldPassword, newPassword, repeatedPassword } = request.body
+
+    logger.api.info('Solicitud de actualización de contraseña propia', {
+      userId,
+      ip: request.ip,
+      userAgent: request.get('User-Agent')
+    })
+
+    const result = await updateUserPassword(userId, oldPassword, newPassword, repeatedPassword)
+    const responseTime = Date.now() - startTime
+
+    logger.api.info('Contraseña propia actualizada exitosamente', {
+      userId,
+      responseTime: `${responseTime}ms`
+    })
+
+    response.status(200).json({
+      success: true,
+      data: {
+        message: 'Password updated successfully',
+        user: result
+      }
+    })
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    logger.api.error('Error en endpoint de actualización de contraseña propia', {
+      userId: request.user?.user_id,
+      responseTime: `${responseTime}ms`,
+      error: error.message
+    })
+    next(error)
+  }
+})
+
+// PATCH /users/image/me - Actualizar imagen propia
+router.patch('/image/me', autenticate, authorize(['admin', 'user']), uploadProfile, async (request, response, next) => {
+  const startTime = Date.now()
+
+  try {
+    const userId = request.user.user_id
+
+    if (!request.file) {
+      logger.api.warn('Intento de actualizar imagen sin archivo', { userId })
+      throw new BadRequestError('No se ha proporcionado ninguna imagen')
+    }
+
+    const imageFileName = request.file.filename
+
+    logger.api.info('Solicitud de actualización de imagen de perfil propia', {
+      userId,
+      imageFileName,
+      ip: request.ip,
+      userAgent: request.get('User-Agent')
+    })
+
+    const updatedUser = await updateImageUserById(userId, imageFileName)
+
+    // Eliminar la imagen anterior si existe
+    if (updatedUser.oldImagePath) {
+      const fullPath = path.join(process.cwd(), 'src/uploads/profile', updatedUser.oldImagePath)
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath)
+        logger.api.info('Imagen anterior eliminada del sistema de archivos', {
+          userId,
+          oldImagePath: updatedUser.oldImagePath
+        })
+      }
+    }
+
+    const responseTime = Date.now() - startTime
+
+    logger.api.info('Imagen de perfil propia actualizada exitosamente', {
+      userId,
+      responseTime: `${responseTime}ms`
+    })
+
+    response.status(200).json({
+      success: true,
+      message: 'Imagen de usuario actualizada correctamente',
+      data: {
+        imageUrl: `/uploads/profile/${imageFileName}`
+      }
+    })
+  } catch (error) {
+    // Eliminar la imagen recién subida si hay error
+    if (request.file) {
+      const fullPath = path.join(process.cwd(), request.file.path)
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath)
+        logger.api.info('Imagen subida eliminada por error en el proceso', {
+          filename: request.file.filename
+        })
+      }
+    }
+
+    const responseTime = Date.now() - startTime
+    logger.api.error('Error en endpoint de actualización de imagen propia', {
       userId: request.user?.user_id,
       responseTime: `${responseTime}ms`,
       error: error.message
