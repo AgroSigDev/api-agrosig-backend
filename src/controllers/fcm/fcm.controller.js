@@ -1,32 +1,52 @@
 import { FCM } from '../../models/index.js'
+import { logger } from '../../utils/logger.utils.js'
 
 async function registerFCMToken (userId, fcmToken, deviceType) {
-  const result = await FCM.registerFCMToken(userId, fcmToken, deviceType)
-  return result
+  try {
+    logger.fcm.info('Controlador - Registrando token FCM', { userId, deviceType })
+    const result = await FCM.registerFCMToken(userId, fcmToken, deviceType)
+    logger.fcm.info('Controlador - Token FCM registrado exitosamente', { userId, deviceType })
+    return result
+  } catch (error) {
+    logger.fcm.error('Controlador - Error registrando token FCM', {
+      userId,
+      error: error.message
+    })
+    throw error
+  }
 }
 
 async function unregisterFCMToken (userId, fcmToken) {
-  const result = await FCM.unregisterFCMToken(userId, fcmToken)
-  return result
+  try {
+    logger.fcm.info('Controlador - Eliminando token FCM', { userId, fcmToken })
+    const result = await FCM.unregisterFCMToken(userId, fcmToken)
+    logger.fcm.info('Controlador - Token FCM eliminado exitosamente', { userId, fcmToken })
+    return result
+  } catch (error) {
+    logger.fcm.error('Controlador - Error eliminando token FCM', {
+      userId,
+      fcmToken,
+      error: error.message
+    })
+    throw error
+  }
 }
 
-async function getUserFCMTokens (req, res) {
+async function getUserFCMTokens (userId) {
   try {
-    const userId = req.user.user_id
-
+    logger.fcm.info('Controlador - Obteniendo tokens FCM del usuario', { userId })
     const tokens = await FCM.getUserFCMTokens(userId)
-
-    res.status(200).json({
-      success: true,
-      tokens,
+    logger.fcm.info('Controlador - Tokens FCM obtenidos exitosamente', {
+      userId,
       total: tokens.length
     })
+    return tokens
   } catch (error) {
-    console.error('Error obteniendo tokens FCM:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Error obteniendo tokens FCM'
+    logger.fcm.error('Controlador - Error obteniendo tokens FCM', {
+      userId,
+      error: error.message
     })
+    throw error
   }
 }
 

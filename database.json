@@ -1,0 +1,29 @@
+{
+  "dev": {
+    "driver": "pg",
+    "host": { "ENV": "DB_HOST" },
+    "port": { "ENV": "DB_PORT" },
+    "database": { "ENV": "DB_NAME" },
+    "username": { "ENV": "DB_USER" },
+    "password": { "ENV": "DB_PASSWORD" },
+    "schema": "public"
+  },
+  "test": {
+    "driver": "pg", 
+    "host": { "ENV": "DB_HOST" },
+    "port": { "ENV": "DB_PORT" },
+    "database": "agrosig_test",
+    "username": { "ENV": "DB_USER" },
+    "password": { "ENV": "DB_PASSWORD" },
+    "schema": "public"
+  },
+  "production": {
+    "driver": "pg",
+    "host": { "ENV": "DB_HOST" },
+    "port": { "ENV": "DB_PORT" },
+    "database": { "ENV": "DB_NAME" },
+    "username": { "ENV": "DB_USER" },
+    "password": { "ENV": "DB_PASSWORD" },
+    "schema": "public"
+  }
+}

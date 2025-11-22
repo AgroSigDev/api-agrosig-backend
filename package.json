@@ -8,7 +8,13 @@
     "dev": "nodemon index.js",
     "lint:fix": "standard --fix",
     "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --runInBand",
-    "test:watch": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watch --detectOpenHandles --runInBand"
+    "test:watch": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watch --detectOpenHandles --runInBand",
+    "migrate:up": "db-migrate up",
+    "migrate:down": "db-migrate down",
+    "migrate:create": "db-migrate create",
+    "migrate:reset": "db-migrate reset",
+    "migrate:status": "db-migrate status",
+    "db:init": "node scripts/init-db.js"
   },
   "standard": {
     "env": [
@@ -31,6 +37,8 @@
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "db-migrate": "^0.11.14",
+    "db-migrate-pg": "^1.5.2",
     "dotenv": "^17.2.0",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
@@ -46,6 +54,7 @@
     "swagger-themes": "^1.4.3",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
+    "winston": "^3.18.3",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {

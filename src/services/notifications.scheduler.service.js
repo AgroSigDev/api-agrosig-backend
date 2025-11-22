@@ -2,9 +2,15 @@ import { pool } from '../lib/db.js'
 import cron from 'node-cron'
 import FirebaseService from './firebase.service.js'
 
+/**
+ * Service class for scheduling and managing automated notification tasks.
+ * Handles weather notifications and activity reminders using cron jobs.
+ */
 class NotificationScheduler {
   /**
-   * Inicia las tareas programadas del sistema.
+   * Starts the scheduled tasks for the notification system.
+   * Sets up cron jobs for weather notifications (7:00 AM daily) and activity reminders (8:00 AM daily).
+   * @returns {void}
    */
   startSchedulers () {
     // Clima: todos los días a las 7:00 AM
@@ -23,7 +29,9 @@ class NotificationScheduler {
   }
 
   /**
-   * Ejecuta una tarea segura, manejando errores de forma controlada.
+   * Executes a scheduled task safely, handling errors in a controlled manner.
+   * @param {Function} taskFn - The async function to execute.
+   * @returns {Promise<void>}
    */
   async safeExecute (taskFn) {
     try {
@@ -34,7 +42,9 @@ class NotificationScheduler {
   }
 
   /**
-   * Envía notificaciones diarias del clima a usuarios con parcelas configuradas.
+   * Sends daily weather notifications to users with configured plots.
+   * Queries users with active plots and FCM tokens, then sends weather data via push notifications.
+   * @returns {Promise<void>}
    */
   async sendWeatherNotifications () {
     try {
@@ -96,7 +106,9 @@ class NotificationScheduler {
   }
 
   /**
-   * Envía recordatorios de actividades programadas del día.
+   * Sends reminders for activities scheduled for the current day.
+   * Queries activities due today and sends push notifications to users.
+   * @returns {Promise<void>}
    */
   async sendActivityReminders () {
     try {
@@ -136,7 +148,12 @@ class NotificationScheduler {
   }
 
   /**
-   * Registra el envío de una notificación en la base de datos.
+   * Logs a notification send event to the database.
+   * @param {number} userId - The ID of the user who received the notification.
+   * @param {string} type - The type of notification (e.g., 'weather', 'activity_reminder').
+   * @param {string} title - The title of the notification.
+   * @param {string} message - The message content of the notification.
+   * @returns {Promise<void>}
    */
   async logNotification (userId, type, title, message) {
     try {

@@ -1,6 +1,13 @@
 import { pool } from '../../lib/db.js'
 import { config } from '../../../config.js'
 import axios from 'axios'
+import {
+  NotFoundError,
+  InternalServerError,
+  BadRequestError,
+  ServiceUnavailableError
+} from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
 
 /**
  * Retrieves the location and coordinates of a specific plot for a given user.
@@ -15,14 +22,35 @@ import axios from 'axios'
 
 async function findUbication (userId, plotId) {
   try {
+    logger.weather.info('Buscando ubicación de parcela', { userId, plotId })
+
     const query = {
       text: 'SELECT plot_id, location, ST_X(geom) as longitude, ST_Y(geom) as latitude FROM plots WHERE user_id = $1 AND plot_id = $2 AND is_active = true',
       values: [userId, plotId]
     }
     const result = await pool.query(query)
+
+    if (result.rows[0]) {
+      logger.weather.info('Ubicación de parcela encontrada', {
+        userId,
+        plotId,
+        location: result.rows[0].location,
+        coordinates: {
+          latitude: result.rows[0].latitude,
+          longitude: result.rows[0].longitude
+        }
+      })
+    } else {
+      logger.weather.warn('Ubicación de parcela no encontrada', { userId, plotId })
+    }
+
     return result.rows[0]
   } catch (error) {
-    console.error('Error find plot', error)
+    logger.weather.error('Error buscando ubicación de parcela', {
+      userId,
+      plotId,
+      error: error.message
+    })
     throw error
   }
 }
@@ -50,9 +78,11 @@ async function findUbication (userId, plotId) {
 
 async function getWeatherData (latitude, longitude) {
   try {
+    logger.weather.info('Obteniendo datos del clima', { latitude, longitude })
+
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${config.weather.appid}&units=metric&lang=es`)
 
-    return {
+    const weatherData = {
       temperature: response.data.main.temp,
       humidity: response.data.main.humidity,
       description: response.data.weather[0].description,
@@ -64,9 +94,34 @@ async function getWeatherData (latitude, longitude) {
       max_temp: response.data.main.temp_max,
       city_name: response.data.name
     }
+
+    logger.weather.info('Datos del clima obtenidos exitosamente', {
+      latitude,
+      longitude,
+      city: weatherData.city_name,
+      temperature: weatherData.temperature
+    })
+
+    return weatherData
   } catch (error) {
-    console.error('Error fetching weather data:', error)
-    throw error
+    logger.weather.error('Error obteniendo datos del clima', {
+      latitude,
+      longitude,
+      error: error.message,
+      statusCode: error.response?.status
+    })
+
+    if (error.response?.status === 401) {
+      throw new BadRequestError('Invalid API key for weather service')
+    } else if (error.response?.status === 404) {
+      throw new NotFoundError('Weather data not found for the given coordinates')
+    } else if (error.response?.status >= 500) {
+      throw new ServiceUnavailableError('Weather service is temporarily unavailable')
+    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      throw new ServiceUnavailableError('Cannot connect to weather service')
+    }
+
+    throw new InternalServerError('Error fetching weather data', { original: error.message })
   }
 }
 
@@ -94,6 +149,8 @@ async function getWeatherData (latitude, longitude) {
 
 async function saveOrUpdateWeatherData (userId, plotId, weatherData) {
   try {
+    logger.weather.info('Guardando o actualizando datos del clima', { userId, plotId })
+
     // 1. Obtener la fecha actual YYYY-MM-DD
     const today = new Date().toISOString().split('T')[0]
 
@@ -136,10 +193,21 @@ async function saveOrUpdateWeatherData (userId, plotId, weatherData) {
     }
 
     const result = await pool.query(query)
+
+    logger.weather.info('Datos del clima guardados o actualizados exitosamente', {
+      userId,
+      plotId,
+      climateId: result.rows[0].climate_id
+    })
+
     return { success: true, climate_id: result.rows[0].climate_id }
   } catch (error) {
-    console.error('Error saving or updating weather data:', error)
-    throw error
+    logger.weather.error('Error guardando o actualizando datos del clima', {
+      userId,
+      plotId,
+      error: error.message
+    })
+    throw new InternalServerError('Error saving weather data', { original: error.message })
   }
 }
 
@@ -157,6 +225,8 @@ async function saveOrUpdateWeatherData (userId, plotId, weatherData) {
 
 async function fetchWeeklyWeather (latitude, longitude) {
   try {
+    logger.weather.info('Obteniendo pronóstico semanal del clima', { latitude, longitude })
+
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${config.weather.appid}&units=metric&lang=es`)
 
     const dailyForecast = {}
@@ -182,10 +252,34 @@ async function fetchWeeklyWeather (latitude, longitude) {
       }
     })
 
-    return Object.values(dailyForecast).slice(0, 7) // Retornar los próximos 7 días
+    const weeklyWeather = Object.values(dailyForecast).slice(0, 7) // Retornar los próximos 7 días
+
+    logger.weather.info('Pronóstico semanal obtenido exitosamente', {
+      latitude,
+      longitude,
+      totalDias: weeklyWeather.length
+    })
+
+    return weeklyWeather
   } catch (error) {
-    console.error('Error fetching weekly weather:', error)
-    throw error
+    logger.weather.error('Error obteniendo pronóstico semanal del clima', {
+      latitude,
+      longitude,
+      error: error.message,
+      statusCode: error.response?.status
+    })
+
+    if (error.response?.status === 401) {
+      throw new BadRequestError('Invalid API key for weather service')
+    } else if (error.response?.status === 404) {
+      throw new NotFoundError('Weather forecast not found for the given coordinates')
+    } else if (error.response?.status >= 500) {
+      throw new ServiceUnavailableError('Weather service is temporarily unavailable')
+    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      throw new ServiceUnavailableError('Cannot connect to weather service')
+    }
+
+    throw new InternalServerError('Error fetching weekly weather forecast', { original: error.message })
   }
 }
 

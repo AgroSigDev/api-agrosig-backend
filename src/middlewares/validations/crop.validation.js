@@ -1,3 +1,6 @@
+import { ValidationError } from '../../lib/api.errors.js'
+import { logger } from '../../utils/logger.utils.js'
+
 /**
  * Validates the required fields of a crop object.
  * Throws an error if any required field is missing.
@@ -18,9 +21,13 @@ async function validFieldsRegisterCrop (crop) {
     !crop.planting_date ||
     !crop.harvest_date
   ) {
-    console.error('Missing fields in crop registration:', crop)
-    throw new Error('There are missing fields to submit in the application')
+    logger.validation.warn('Campos faltantes en registro de cultivo', {
+      camposRecibidos: Object.keys(crop),
+      camposFaltantes: ['crop_type', 'crop_variety', 'planting_date', 'harvest_date'].filter(field => !crop[field])
+    })
+    throw new ValidationError('There are missing fields to submit in the application')
   }
+  logger.validation.info('Validación de campos de registro de cultivo exitosa', { crop_type: crop.crop_type })
 }
 
 export {
