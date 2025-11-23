@@ -34,8 +34,11 @@ app.use(express.json())
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'http://192.168.34.105:4000'
+    'http://localhost:4000',
+    'http://192.168.34.104:4000',
+    'https://api-agrosig-backend.onrender.com'
   ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }))
 app.use(express.urlencoded({ extended: true }))
