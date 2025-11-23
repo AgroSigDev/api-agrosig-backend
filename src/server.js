@@ -33,12 +33,12 @@ console.log('🔔 Servicio de notificaciones programadas iniciado.', notificatio
 app.use(express.json())
 app.use(cors({
   origin: [
-    'http://localhost:3000',
-    'http://localhost:4000',
     'http://192.168.34.104:4000',
-    'https://api-agrosig-backend.onrender.com'
+    'https://api-agrosig-backend.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:4000'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true
 }))
 app.use(express.urlencoded({ extended: true }))
