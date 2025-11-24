@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import http from 'http'
+import { pool } from './lib/db.js'
 import { setupSwagger } from '../swagger.config.js'
 import { config } from '../config.js'
 import userRouter from './routes/users/users.routes.js'
@@ -91,6 +92,44 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: config.env
   })
+})
+
+// test de la conexion a BD
+app.get('/test-db', async (req, res) => {
+  try {
+    console.log('🔍 Probando conexión a BD...')
+    console.log('Config BD:', {
+      host: config.db.host,
+      port: config.db.port,
+      user: config.db.user,
+      database: config.db.name,
+      hasPassword: !!config.db.password
+    })
+
+    // Usa tu pool existente
+    const result = await pool.query('SELECT NOW() as current_time, version() as db_version')
+
+    console.log('Conexión a BD exitosa')
+    res.json({
+      status: 'DB Connection OK',
+      timestamp: result.rows[0].current_time,
+      dbVersion: result.rows[0].db_version,
+      environment: config.env
+    })
+  } catch (error) {
+    console.error('Error de conexión a BD:', error)
+    res.status(500).json({
+      status: 'DB Connection FAILED',
+      error: error.message,
+      environment: config.env,
+      dbConfig: {
+        host: config.db.host,
+        port: config.db.port,
+        user: config.db.user,
+        database: config.db.name
+      }
+    })
+  }
 })
 
 // Middleware para manejar errores de rutas no encontradas

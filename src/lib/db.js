@@ -6,5 +6,10 @@ export const pool = new pg.Pool({
   port: config.db.port,
   user: config.db.user,
   password: config.db.password,
-  database: config.db.name
+  database: config.db.name,
+  ssl: config.env === 'production'
+    ? {
+        rejectUnauthorized: false
+      }
+    : false
 })

@@ -2,12 +2,18 @@ import { config } from './config.js'
 import { httpServer } from './src/server.js'
 
 async function startServer () {
-  // Iniciar el servidor HTTP en todas las interfaces
-  await new Promise((resolve) => httpServer.listen(config.port, resolve))
+  await new Promise((resolve) => httpServer.listen(config.port, '0.0.0.0', resolve))
 
-  console.log(`🔐 Servidor HTTP: https://api-agrosig-backend.onrender.com:${config.port}`)
-  console.log(`📚 Documentación de la API disponible en: ${config.docs.urlDocs}`)
-  console.log('🌐 Sitio Web: http://localhost:3000')
+  console.log(`🚀 Servidor iniciado en puerto: ${config.port}`)
+  console.log(`🌐 Entorno: ${config.env}`)
+
+  if (config.env === 'production') {
+    console.log('🔐 URL de producción: https://api-agrosig-backend.onrender.com')
+    console.log('📚 Docs: https://api-agrosig-backend.onrender.com/api-docs')
+  } else {
+    console.log(`🔐 URL local: http://localhost:${config.port}`)
+    console.log(`📚 Docs: http://localhost:${config.port}/api-docs`)
+  }
 }
 
 startServer()
