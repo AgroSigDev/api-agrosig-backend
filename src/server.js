@@ -38,7 +38,8 @@ app.use(cors({
     'http://192.168.34.104:4000',
     'https://api-agrosig-backend.onrender.com',
     'http://localhost',
-    'http://10.0.2.2:4000'
+    'http://10.0.2.2:4000',
+    'https://agrosig-frontend.vercel.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
@@ -80,15 +81,6 @@ app.get('/', (request, response) => {
     ],
     documentation: config.docs.urlDocs,
     api_endpoint: `http://localhost:${config.port}`,
-    environment: config.env
-  })
-})
-
-// Ruta healthcheck
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
     environment: config.env
   })
 })
