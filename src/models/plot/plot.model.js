@@ -12,28 +12,98 @@ import {
 } from '../../lib/api.errors.js'
 import { logger } from '../../utils/logger.utils.js'
 
+// Función auxiliar para parsear coordenadas de diferentes formatos
+function parseCoordinate (coord) {
+  if (coord === null || coord === undefined) return NaN
+
+  let coordStr = coord.toString().trim()
+
+  // Reemplazar comas por puntos para formato europeo
+  coordStr = coordStr.replace(',', '.')
+
+  // Limpiar caracteres no numéricos excepto punto y signo negativo
+  coordStr = coordStr.replace(/[^\d.-]/g, '')
+
+  // Manejar múltiples puntos (como "12..345" o "12.34.56")
+  const parts = coordStr.split('.')
+  if (parts.length > 2) {
+    // Tomar primera parte + punto + resto unido
+    coordStr = parts[0] + '.' + parts.slice(1).join('')
+  }
+
+  // Eliminar puntos duplicados
+  coordStr = coordStr.replace(/\.\.+/g, '.')
+
+  // Si empieza o termina con punto, limpiar
+  coordStr = coordStr.replace(/^\.|\.$/g, '')
+
+  const parsed = parseFloat(coordStr)
+  logger.plots.info('Coordenada parseada', { original: coord, parsed, coordStr })
+  return parsed
+}
+
+// Función para extraer coordenadas de strings
+function extractCoordinatesFromString (locationString) {
+  try {
+    // Patrones comunes de coordenadas
+    const patterns = [
+      /(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/, // "lat, long"
+      /(-?\d+\.?\d*)\s*(-?\d+\.?\d*)/, // "lat long"
+      /lat[itude]?[:\s]*(-?\d+\.?\d*).*?long[itude]?[:\s]*(-?\d+\.?\d*)/i // "lat: 12.34 long: 56.78"
+    ]
+
+    for (const pattern of patterns) {
+      const match = locationString.match(pattern)
+      if (match) {
+        const lat = parseCoordinate(match[1])
+        const long = parseCoordinate(match[2])
+
+        if (!isNaN(lat) && !isNaN(long)) {
+          return { lat, long }
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    logger.plots.warn('Error extrayendo coordenadas de string', {
+      locationString,
+      error: error.message
+    })
+    return null
+  }
+}
+
 function extractAndValidateCoordinates (plotData) {
   let lat, long
 
-  // Prioridad 1: Campos lat y long separados
+  logger.plots.info('Extrayendo coordenadas', { plotData })
+
+  // Campos lat y long
   if (plotData.lat !== undefined && plotData.long !== undefined) {
-    lat = parseFloat(plotData.lat)
-    long = parseFloat(plotData.long)
-  } else if (plotData.location && plotData.location.includes(',')) {
-    const coords = plotData.location.split(',').map(coord => coord.trim())
-    if (coords.length === 2) {
-      lat = parseFloat(coords[0])
-      long = parseFloat(coords[1])
+    lat = parseCoordinate(plotData.lat)
+    long = parseCoordinate(plotData.long)
+    logger.plots.info('Coordenadas extraídas de campos lat/long', { lat, long })
+  } else if (plotData.location && typeof plotData.location === 'string') {
+    // String de coordenadas en location
+    const coords = extractCoordinatesFromString(plotData.location)
+    if (coords) {
+      lat = coords.lat
+      long = coords.long
+      logger.plots.info('Coordenadas extraídas de location string', { lat, long })
     }
+  } else if (plotData.latitude !== undefined) {
+    // campos de latitude y longitude
+    lat = parseCoordinate(plotData.latitude)
+    long = parseCoordinate(plotData.longitude)
+    logger.plots.info('Coordenadas extraídas de campos latitude/longitude', { lat, long })
+  } if (lat === undefined || long === undefined || isNaN(lat) || isNaN(long)) {
+    // Validar que se obtuvieron coordenadas válidas
+    logger.plots.warn('Coordenadas inválidas o faltantes', { plotData, avaliableFields: Object.keys(plotData) })
+    throw new ValidationError('Valid coordinates are required. Provide either: "lat" and "long", "latitude" and "longitude", or coordinates in "location" field')
   }
 
-  // Validar que se obtuvieron coordenadas válidas
-  if (lat === undefined || long === undefined || isNaN(lat) || isNaN(long)) {
-    logger.plots.warn('Coordenadas inválidas en datos de parcela', { plotData })
-    throw new ValidationError('Valid coordinates are required. Use either "lat" and "long" fields or "lat,long" format in location')
-  }
-
-  // Validar rangos
+  // Validar rangos de tolerancia
   if (lat < -90 || lat > 90) {
     logger.plots.warn('Latitud fuera de rango', { lat })
     throw new ValidationError(`Invalid latitude: ${lat}. Must be between -90 and 90.`)
@@ -43,6 +113,7 @@ function extractAndValidateCoordinates (plotData) {
     throw new ValidationError(`Invalid longitude: ${long}. Must be between -180 and 180.`)
   }
 
+  logger.plots.info('Coordenadas validadas exitosamente', { lat, long })
   return { lat, long }
 }
 
