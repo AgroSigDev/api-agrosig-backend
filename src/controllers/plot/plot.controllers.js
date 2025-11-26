@@ -4,14 +4,26 @@ import { logger } from '../../utils/logger.utils.js'
 
 async function registerPlot (userId, plot) {
   try {
-    logger.plots.info('Controlador - Registrando parcela', { userId })
+    logger.plots.info('=== INICIANDO REGISTRO DE PARCELA ===', {
+      userId,
+      plotData: plot,
+      coordinatesReceived: {
+        lat: plot.lat,
+        long: plot.long,
+        latitude: plot.latitude,
+        longitude: plot.longitude,
+        location: plot.location
+      }
+    })
     const data = await Plot.createPlot(userId, plot)
     logger.plots.info('Controlador - Parcela registrada exitosamente', { userId, plotName: plot.plot_name })
     return data
   } catch (error) {
-    logger.plots.error('Controlador - Error registrando parcela', {
+    logger.plots.error('Error creando parcela', {
       userId,
-      error: error.message
+      error: error.message,
+      plotData: plot,
+      stack: error.stack
     })
     throw error
   }

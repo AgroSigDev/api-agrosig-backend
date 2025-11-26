@@ -12,28 +12,125 @@ import {
 } from '../../lib/api.errors.js'
 import { logger } from '../../utils/logger.utils.js'
 
+/**
+ * Parses a coordinate value from various formats into a float.
+ * Handles European decimal format (commas), cleans non-numeric characters,
+ * and manages multiple decimal points.
+ *
+ * @param {any} coord - The coordinate value to parse.
+ * @returns {number} The parsed coordinate as a float, or NaN if invalid.
+ */
+function parseCoordinate (coord) {
+  if (coord === null || coord === undefined) return NaN
+
+  let coordStr = coord.toString().trim()
+
+  // Reemplazar comas por puntos para formato europeo
+  coordStr = coordStr.replace(',', '.')
+
+  // Limpiar caracteres no numéricos excepto punto y signo negativo
+  coordStr = coordStr.replace(/[^\d.-]/g, '')
+
+  // Manejar múltiples puntos (como "12..345" o "12.34.56")
+  const parts = coordStr.split('.')
+  if (parts.length > 2) {
+    // Tomar primera parte + punto + resto unido
+    coordStr = parts[0] + '.' + parts.slice(1).join('')
+  }
+
+  // Eliminar puntos duplicados
+  coordStr = coordStr.replace(/\.\.+/g, '.')
+
+  // Si empieza o termina con punto, limpiar
+  coordStr = coordStr.replace(/^\.|\.$/g, '')
+
+  const parsed = parseFloat(coordStr)
+  logger.plots.info('Coordenada parseada', { original: coord, parsed, coordStr })
+  return parsed
+}
+
+/**
+ * Extracts latitude and longitude coordinates from a location string.
+ * Supports various formats like "lat, long", "lat long", or "lat: 12.34 long: 56.78".
+ *
+ * @param {string} locationString - The string containing coordinate information.
+ * @returns {Object|null} An object with 'lat' and 'long' properties if coordinates are found, otherwise null.
+ */
+function extractCoordinatesFromString (locationString) {
+  try {
+    // Patrones comunes de coordenadas
+    const patterns = [
+      /(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/, // "lat, long"
+      /(-?\d+\.?\d*)\s*(-?\d+\.?\d*)/, // "lat long"
+      /lat[itude]?[:\s]*(-?\d+\.?\d*).*?long[itude]?[:\s]*(-?\d+\.?\d*)/i // "lat: 12.34 long: 56.78"
+    ]
+
+    for (const pattern of patterns) {
+      const match = locationString.match(pattern)
+      if (match) {
+        const lat = parseCoordinate(match[1])
+        const long = parseCoordinate(match[2])
+
+        if (!isNaN(lat) && !isNaN(long)) {
+          return { lat, long }
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    logger.plots.warn('Error extrayendo coordenadas de string', {
+      locationString,
+      error: error.message
+    })
+    return null
+  }
+}
+
+/**
+ * Extracts and validates coordinates from plot data.
+ * Supports multiple input formats: lat/long fields, location string, or latitude/longitude fields.
+ * Validates that coordinates are within valid ranges (-90 to 90 for lat, -180 to 180 for long).
+ *
+ * @param {Object} plotData - The plot data object containing coordinate information.
+ * @param {number|string} [plotData.lat] - The latitude coordinate.
+ * @param {number|string} [plotData.long] - The longitude coordinate.
+ * @param {string} [plotData.location] - A string containing coordinates (e.g., "12.34, 56.78").
+ * @param {number|string} [plotData.latitude] - Alternative latitude field.
+ * @param {number|string} [plotData.longitude] - Alternative longitude field.
+ * @returns {Object} An object with 'lat' and 'long' properties containing validated coordinates.
+ * @throws {ValidationError} If coordinates are invalid, missing, or out of range.
+ */
 function extractAndValidateCoordinates (plotData) {
   let lat, long
 
-  // Prioridad 1: Campos lat y long separados
+  logger.plots.info('Extrayendo coordenadas', { plotData })
+
+  // Campos lat y long
   if (plotData.lat !== undefined && plotData.long !== undefined) {
-    lat = parseFloat(plotData.lat)
-    long = parseFloat(plotData.long)
-  } else if (plotData.location && plotData.location.includes(',')) {
-    const coords = plotData.location.split(',').map(coord => coord.trim())
-    if (coords.length === 2) {
-      lat = parseFloat(coords[0])
-      long = parseFloat(coords[1])
+    lat = parseCoordinate(plotData.lat)
+    long = parseCoordinate(plotData.long)
+    logger.plots.info('Coordenadas extraídas de campos lat/long', { lat, long })
+  } else if (plotData.location && typeof plotData.location === 'string') {
+    // String de coordenadas en location
+    const coords = extractCoordinatesFromString(plotData.location)
+    if (coords) {
+      lat = coords.lat
+      long = coords.long
+      logger.plots.info('Coordenadas extraídas de location string', { lat, long })
     }
+  } else if (plotData.latitude !== undefined) {
+    // campos de latitude y longitude
+    lat = parseCoordinate(plotData.latitude)
+    long = parseCoordinate(plotData.longitude)
+    logger.plots.info('Coordenadas extraídas de campos latitude/longitude', { lat, long })
+  } if (lat === undefined || long === undefined || isNaN(lat) || isNaN(long)) {
+    // Validar que se obtuvieron coordenadas válidas
+    logger.plots.warn('Coordenadas inválidas o faltantes', { plotData, avaliableFields: Object.keys(plotData) })
+    throw new ValidationError('Valid coordinates are required. Provide either: "lat" and "long", "latitude" and "longitude", or coordinates in "location" field')
   }
 
-  // Validar que se obtuvieron coordenadas válidas
-  if (lat === undefined || long === undefined || isNaN(lat) || isNaN(long)) {
-    logger.plots.warn('Coordenadas inválidas en datos de parcela', { plotData })
-    throw new ValidationError('Valid coordinates are required. Use either "lat" and "long" fields or "lat,long" format in location')
-  }
-
-  // Validar rangos
+  // Validar rangos de tolerancia
   if (lat < -90 || lat > 90) {
     logger.plots.warn('Latitud fuera de rango', { lat })
     throw new ValidationError(`Invalid latitude: ${lat}. Must be between -90 and 90.`)
@@ -43,6 +140,7 @@ function extractAndValidateCoordinates (plotData) {
     throw new ValidationError(`Invalid longitude: ${long}. Must be between -180 and 180.`)
   }
 
+  logger.plots.info('Coordenadas validadas exitosamente', { lat, long })
   return { lat, long }
 }
 
@@ -243,7 +341,30 @@ async function getAllPlots () {
     logger.plots.info('Obteniendo todas las parcelas')
 
     const query = {
-      text: 'SELECT * FROM plots'
+      text: `SELECT 
+      p.plot_id,
+      p.user_id,
+      p.plot_name,
+      p.location,
+      p.area,
+      ST_Y(p.geom) AS lat,
+      ST_X(p.geom) AS lng,
+      p.is_active,
+      p.created_at,
+      p.updated_at,
+
+      u.user_id AS user_id,
+      u.first_name,
+      u.paternal_surname,
+      u.maternal_surname,
+      u.email
+
+      FROM plots p
+      JOIN users u
+          ON p.user_id = u.user_id
+      WHERE u.is_active = TRUE
+        AND u.configured_plot = TRUE
+      ORDER BY p.created_at DESC`
     }
     const result = await pool.query(query)
 
@@ -382,7 +503,7 @@ async function updatePlotById (userId, plotId, plotData) {
  * If both conditions are met, it performs a soft delete operation on the plot.
  *
  * @async
- * @function detelePlotById
+ * @function deletePlotById
  * @param {number|string} userId - The ID of the user attempting to delete the plot.
  * @param {number|string} plotId - The ID of the plot to be deleted.
  * @throws {Error} If the plot is not found or the user does not own the plot.
@@ -390,7 +511,7 @@ async function updatePlotById (userId, plotId, plotData) {
  * @returns {Promise<void>} Resolves when the plot is successfully soft deleted.
  */
 
-async function detelePlotById (userId, plotId) {
+async function deletePlotById (userId, plotId) {
   try {
     logger.plots.info('Eliminando parcela por ID', { userId, plotId })
 
@@ -434,5 +555,5 @@ export const Plot = {
   getAllPlots,
   getUbicationCoords,
   updatePlotById,
-  detelePlotById
+  deletePlotById
 }

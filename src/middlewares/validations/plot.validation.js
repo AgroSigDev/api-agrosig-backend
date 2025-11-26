@@ -13,18 +13,34 @@ import { logger } from '../../utils/logger.utils.js'
  */
 
 async function validFieldsRegisterPlot (plot) {
-  if (
-    !plot.plot_name ||
-    !plot.location ||
-    !plot.area
-  ) {
+  const requiredFields = ['plot_name', 'location', 'area']
+  const missingFields = requiredFields.filter(field => !plot[field])
+
+  if (missingFields.length > 0) {
     logger.validation.warn('Campos faltantes en registro de parcela', {
       camposRecibidos: Object.keys(plot),
-      camposFaltantes: ['plot_name', 'location', 'area'].filter(field => !plot[field])
+      camposFaltantes: missingFields
     })
     throw new ValidationError('There are missing fields to submit in the application')
   }
-  logger.validation.info('Validación de campos de registro de parcela exitosa', { plot_name: plot.plot_name })
+
+  // Verificar que tengamos al menos una forma de obtener coordenadas
+  const hasCoordinates =
+    (plot.lat !== undefined && plot.long !== undefined) ||
+    (plot.latitude !== undefined && plot.longitude !== undefined) ||
+    (plot.location && typeof plot.location === 'string' && plot.location.includes(','))
+
+  if (!hasCoordinates) {
+    logger.validation.warn('No se proporcionaron coordenadas', {
+      camposDisponibles: Object.keys(plot)
+    })
+    throw new ValidationError('Coordinates are required. Provide either "lat/long", "latitude/longitude", or coordinates in "location" field')
+  }
+
+  logger.validation.info('Validación de campos de registro de parcela exitosa', {
+    plot_name: plot.plot_name,
+    hasCoordinates
+  })
 }
 
 /**
@@ -38,12 +54,26 @@ async function validFieldsRegisterPlot (plot) {
  */
 
 async function validateLocationPlot (location) {
-  const locationRegex = /^[a-zA-Z0-9\s,.'-]{3,}$/
-  if (!locationRegex.test(location)) {
-    logger.validation.warn('Formato de ubicación inválido', { location })
-    throw new ValidationError('Invalid location format')
+  // Permite letras con acento y caracteres especiales del español
+  const locationRegex = /^[a-zA-ZÀ-ÿ0-9\s,.'\-()/&°#]+$/u
+
+  if (!location || location.trim().length < 3) {
+    logger.validation.warn('Ubicación muy corta o vacía', { location })
+    throw new ValidationError('Location must be at least 3 characters long')
   }
-  logger.validation.info('Validación de formato de ubicación exitosa', { location })
+
+  if (!locationRegex.test(location)) {
+    logger.validation.warn('Formato de ubicación inválido', {
+      location,
+      length: location.length,
+      firstChars: location.substring(0, 50)
+    })
+    throw new ValidationError('Invalid location format. Please use only letters, numbers, spaces, and common punctuation.')
+  }
+
+  logger.validation.info('Validación de formato de ubicación exitosa', {
+    location: location.substring(0, 50) + (location.length > 50 ? '...' : '')
+  })
 }
 
 /**
