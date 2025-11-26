@@ -12,7 +12,14 @@ import {
 } from '../../lib/api.errors.js'
 import { logger } from '../../utils/logger.utils.js'
 
-// Función auxiliar para parsear coordenadas de diferentes formatos
+/**
+ * Parses a coordinate value from various formats into a float.
+ * Handles European decimal format (commas), cleans non-numeric characters,
+ * and manages multiple decimal points.
+ *
+ * @param {any} coord - The coordinate value to parse.
+ * @returns {number} The parsed coordinate as a float, or NaN if invalid.
+ */
 function parseCoordinate (coord) {
   if (coord === null || coord === undefined) return NaN
 
@@ -42,7 +49,13 @@ function parseCoordinate (coord) {
   return parsed
 }
 
-// Función para extraer coordenadas de strings
+/**
+ * Extracts latitude and longitude coordinates from a location string.
+ * Supports various formats like "lat, long", "lat long", or "lat: 12.34 long: 56.78".
+ *
+ * @param {string} locationString - The string containing coordinate information.
+ * @returns {Object|null} An object with 'lat' and 'long' properties if coordinates are found, otherwise null.
+ */
 function extractCoordinatesFromString (locationString) {
   try {
     // Patrones comunes de coordenadas
@@ -74,6 +87,20 @@ function extractCoordinatesFromString (locationString) {
   }
 }
 
+/**
+ * Extracts and validates coordinates from plot data.
+ * Supports multiple input formats: lat/long fields, location string, or latitude/longitude fields.
+ * Validates that coordinates are within valid ranges (-90 to 90 for lat, -180 to 180 for long).
+ *
+ * @param {Object} plotData - The plot data object containing coordinate information.
+ * @param {number|string} [plotData.lat] - The latitude coordinate.
+ * @param {number|string} [plotData.long] - The longitude coordinate.
+ * @param {string} [plotData.location] - A string containing coordinates (e.g., "12.34, 56.78").
+ * @param {number|string} [plotData.latitude] - Alternative latitude field.
+ * @param {number|string} [plotData.longitude] - Alternative longitude field.
+ * @returns {Object} An object with 'lat' and 'long' properties containing validated coordinates.
+ * @throws {ValidationError} If coordinates are invalid, missing, or out of range.
+ */
 function extractAndValidateCoordinates (plotData) {
   let lat, long
 
@@ -314,7 +341,30 @@ async function getAllPlots () {
     logger.plots.info('Obteniendo todas las parcelas')
 
     const query = {
-      text: 'SELECT * FROM plots'
+      text: `SELECT 
+      p.plot_id,
+      p.user_id,
+      p.plot_name,
+      p.location,
+      p.area,
+      ST_Y(p.geom) AS lat,
+      ST_X(p.geom) AS lng,
+      p.is_active,
+      p.created_at,
+      p.updated_at,
+
+      u.user_id AS user_id,
+      u.first_name,
+      u.paternal_surname,
+      u.maternal_surname,
+      u.email
+
+      FROM plots p
+      JOIN users u
+          ON p.user_id = u.user_id
+      WHERE u.is_active = TRUE
+        AND u.configured_plot = TRUE
+      ORDER BY p.created_at DESC`
     }
     const result = await pool.query(query)
 
@@ -453,7 +503,7 @@ async function updatePlotById (userId, plotId, plotData) {
  * If both conditions are met, it performs a soft delete operation on the plot.
  *
  * @async
- * @function detelePlotById
+ * @function deletePlotById
  * @param {number|string} userId - The ID of the user attempting to delete the plot.
  * @param {number|string} plotId - The ID of the plot to be deleted.
  * @throws {Error} If the plot is not found or the user does not own the plot.
@@ -461,7 +511,7 @@ async function updatePlotById (userId, plotId, plotData) {
  * @returns {Promise<void>} Resolves when the plot is successfully soft deleted.
  */
 
-async function detelePlotById (userId, plotId) {
+async function deletePlotById (userId, plotId) {
   try {
     logger.plots.info('Eliminando parcela por ID', { userId, plotId })
 
@@ -505,5 +555,5 @@ export const Plot = {
   getAllPlots,
   getUbicationCoords,
   updatePlotById,
-  detelePlotById
+  deletePlotById
 }

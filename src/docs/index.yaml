@@ -1,7 +1,7 @@
 info:
   title: Api-AgroSig-Backend
   description: >-
-    # Sistema de Gestión Agrícola
+    # API AGROSIG - Sistema de Gestión Agrícola
 
 
     ## Descripción General
@@ -110,6 +110,9 @@ info:
     - La API utiliza autenticación Bearer Token + refresh tokens
         
     - Algunos endpoints requieren de un rol en especifico
+        
+
+    \-
   version: 1.0.0
 tags: []
 paths:
@@ -2234,6 +2237,228 @@ paths:
       security: []
       consumes:
         - application/json
+      produces:
+        - application/json
+  /plots/plots:
+    get:
+      summary: getAllPlots
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: true
+          type: string
+          x-example: >-
+            Bearer
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlX2lkIjoxLCJpYXQiOjE3NjQxODY0MDIsImV4cCI6MTc2NDIyOTYwMn0.iox-Rx6HmEXCh4P2ZdcLjSYY3BZJujLzNlLRcFXq3oo
+        - name: x-refresh-token
+          in: header
+          description: ''
+          required: true
+          type: string
+          x-example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlX2lkIjoxLCJpYXQiOjE3NjQxODY0MDIsImV4cCI6MTc2NDc5MTIwMn0.7CXNsQZsdLZ2kKRZTScQElbWUlPuGckRqATCbwAIl_4
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          examples:
+            application/json:
+              success: true
+              data:
+                - plot_id: 4
+                  user_id: 8
+                  plot_name: La ventosa
+                  location: >-
+                    29660 Pantepec Barrio San Jacinto SN, Mexico, Chiapas,
+                    Mexico
+                  area: '10000'
+                  lat: 17.18759071801593
+                  lng: -93.04880026727915
+                  is_active: true
+                  created_at: '2025-11-26T18:38:27.211Z'
+                  updated_at: '2025-11-26T18:38:27.211Z'
+                  first_name: Juanito
+                  paternal_surname: Garcia
+                  maternal_surname: Morales
+                  email: juanito@gmail.com
+                - plot_id: 3
+                  user_id: 5
+                  plot_name: Parcela 1
+                  location: Rayon, Chiapas
+                  area: '200.5'
+                  lat: 17.20613
+                  lng: -93.025273
+                  is_active: true
+                  created_at: '2025-11-21T14:53:17.307Z'
+                  updated_at: '2025-11-21T14:53:17.307Z'
+                  first_name: Gabriel
+                  paternal_surname: Gomez
+                  maternal_surname: Suarez
+                  email: henry@gmail.com
+                - plot_id: 2
+                  user_id: 2
+                  plot_name: Parcela Morales
+                  location: Quinta Nte. Pte. 28, Tapilula, Chiapas, Mexico
+                  area: '30500'
+                  lat: 17.253047568517452
+                  lng: -93.02403543144464
+                  is_active: true
+                  created_at: '2025-11-14T01:54:51.347Z'
+                  updated_at: '2025-11-14T01:54:51.347Z'
+                  first_name: Henry
+                  paternal_surname: Gonzalez
+                  maternal_surname: Perez
+                  email: henryperez@gmail.com
+                - plot_id: 1
+                  user_id: 1
+                  plot_name: Mi parcela actualizada
+                  location: Tapilula, Chiapas
+                  area: '1500.5'
+                  lat: 17.254834
+                  lng: -93.01104
+                  is_active: true
+                  created_at: '2025-11-13T19:46:50.759Z'
+                  updated_at: '2025-11-21T15:09:30.351Z'
+                  first_name: Gabriel
+                  paternal_surname: Gomez
+                  maternal_surname: Hernandez
+                  email: ga78goher@gmail.com
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    plot_id:
+                      type: integer
+                    user_id:
+                      type: integer
+                    plot_name:
+                      type: string
+                    location:
+                      type: string
+                    area:
+                      type: string
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                    is_active:
+                      type: boolean
+                    created_at:
+                      type: string
+                    updated_at:
+                      type: string
+                    first_name:
+                      type: string
+                    paternal_surname:
+                      type: string
+                    maternal_surname:
+                      type: string
+                    email:
+                      type: string
+                  required:
+                    - plot_id
+                    - user_id
+                    - plot_name
+                    - location
+                    - area
+                    - lat
+                    - lng
+                    - is_active
+                    - created_at
+                    - updated_at
+                    - first_name
+                    - paternal_surname
+                    - maternal_surname
+                    - email
+            required:
+              - success
+              - data
+        '401':
+          description: ''
+          headers: {}
+          examples:
+            application/json:
+              status: error
+              httpStatus: 401
+              code: AUTHENTICATION_ERROR
+              message: Authorization header is missing
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              httpStatus:
+                type: integer
+              code:
+                type: string
+              message:
+                type: string
+            required:
+              - status
+              - httpStatus
+              - code
+              - message
+        '403':
+          description: ''
+          headers: {}
+          examples:
+            application/json:
+              status: error
+              httpStatus: 403
+              code: FORBIDDEN
+              message: 'Access denied: insufficient permission'
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              httpStatus:
+                type: integer
+              code:
+                type: string
+              message:
+                type: string
+            required:
+              - status
+              - httpStatus
+              - code
+              - message
+        '498':
+          description: ''
+          headers: {}
+          examples:
+            application/json:
+              status: error
+              httpStatus: 498
+              code: INVALID_TOKEN
+              message: Token Expired
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              httpStatus:
+                type: integer
+              code:
+                type: string
+              message:
+                type: string
+            required:
+              - status
+              - httpStatus
+              - code
+              - message
+      security: []
       produces:
         - application/json
   /plots/ubication-plot/:

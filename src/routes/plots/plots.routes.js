@@ -1,6 +1,6 @@
 import express from 'express'
-import { registerPlot, getUbicationCoords, getPlotByUserId, updatePlotById, detelePlotById } from '../../controllers/index.js'
-import { autenticate } from '../../middlewares/index.js'
+import { registerPlot, getAllPlots, getUbicationCoords, getPlotByUserId, updatePlotById, detelePlotById } from '../../controllers/index.js'
+import { autenticate, authorize } from '../../middlewares/index.js'
 import { logger } from '../../utils/logger.utils.js'
 
 const router = express.Router()
@@ -37,6 +37,43 @@ router.post('/register', autenticate, async (request, response, next) => {
   } catch (error) {
     const responseTime = Date.now() - startTime
     logger.api.error('Error en endpoint de registro de parcela', {
+      userId: request.user?.user_id,
+      responseTime: `${responseTime}ms`,
+      error: error.message
+    })
+    next(error)
+  }
+})
+
+// GET /plots/plots
+router.get('/plots', autenticate, authorize(['admin']), async (request, response, next) => {
+  const startTime = Date.now()
+
+  try {
+    const userId = request.user.user_id
+
+    logger.api.info('Solicitud de obtención de todas las parcelas', {
+      userId,
+      ip: request.ip,
+      userAgent: request.get('User-Agent')
+    })
+
+    const result = await getAllPlots()
+    const responseTime = Date.now() - startTime
+
+    logger.api.info('Todas las parcelas obtenidas exitosamente', {
+      userId,
+      totalPlots: result.length,
+      responseTime: `${responseTime}ms`
+    })
+
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    logger.api.error('Error en endpoint de obtención de todas las parcelas', {
       userId: request.user?.user_id,
       responseTime: `${responseTime}ms`,
       error: error.message
