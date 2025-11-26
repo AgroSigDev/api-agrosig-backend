@@ -22,7 +22,7 @@ dotenv.config({ path: envFile })
 
 export const config = {
   port: process.env.PORT || 4000,
-  appUrl: process.env.APP_URL,
+  appUrl: process.env.APP_URL || 'https://agrosig-frontend.vercel.app',
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,

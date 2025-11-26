@@ -35,7 +35,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:4000',
-    'http://192.168.34.104:4000',
+    'http://192.168.34.103:4000',
     'https://api-agrosig-backend.onrender.com',
     'http://localhost',
     'http://10.0.2.2:4000',

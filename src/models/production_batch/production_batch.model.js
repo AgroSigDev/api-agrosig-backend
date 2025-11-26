@@ -24,7 +24,7 @@ import { logger } from '../../utils/logger.utils.js'
  */
 async function createProductionBatch (userId, cropId, batchData) {
   try {
-    logger.production.info('Creando lote de producción', { userId, cropId, batchData })
+    logger.production.info('Creando lote de producción', { userId, cropId, batchData, appUrl: config.appUrl })
 
     await validateProductionBatch(batchData)
 
@@ -39,6 +39,9 @@ async function createProductionBatch (userId, cropId, batchData) {
     // Generate unique code and QR URL
     const uniqueCode = generateUniqueBatchCode()
     const qrUrl = `${config.appUrl}/trazabilidad/${uniqueCode}`
+
+    logger.info('Generando código único y URL para QR', { qrUrl, uniqueCode, appUrl: config.appUrl })
+
     const creationDate = new Date()
 
     // Insert product batch
