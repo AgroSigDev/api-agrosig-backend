@@ -574,22 +574,32 @@ async function getBatchActivities (productionId, userId) {
     }
 
     const query = {
-      text: `SELECT a.activity_id, a.activity_type, a.date, a.description,
-                    a.cost_total, a.created_at, ab.branch_id,
-                    json_agg(
-                      json_build_object(
-                        'input_name', iu.input_name,
-                        'quantity', iu.quantity,
-                        'unit', iu.unit,
-                        'unit_cost', iu.unit_cost
-                      )
-                    ) as inputs
+      text: `SELECT 
+               a.activity_id, 
+               a.activity_type, 
+               a.date, 
+               a.description,
+               a.cost_total, 
+               a.created_at,
+               ab.branch_id,
+               COALESCE(
+                 (
+                   SELECT json_agg(
+                     json_build_object(
+                       'input_name', iu.input_name,
+                       'quantity', iu.quantity,
+                       'unit', iu.unit,
+                       'unit_cost', iu.unit_cost
+                     )
+                   )
+                   FROM input_used iu
+                   WHERE iu.activity_id = a.activity_id
+                 ), 
+                 '[]'::json
+               ) as inputs
              FROM activity_branch ab
              JOIN activity a ON ab.activity_id = a.activity_id
-             LEFT JOIN input_used iu ON a.activity_id = iu.activity_id
              WHERE ab.production_id = $1
-             GROUP BY a.activity_id, a.activity_type, a.date, a.description, 
-                      a.cost_total, a.created_at, ab.branch_id
              ORDER BY a.date ASC`,
       values: [productionId]
     }
@@ -776,6 +786,53 @@ async function getTraceabilityByUniqueCode (uniqueCode) {
   }
 }
 
+/**
+ * Generates or retrieves QR code for a production batch
+ * Forces QR generation if it doesn't exist
+ * @param {number} productionId - The ID of the production batch
+ * @returns {Promise<object>} QR code data
+ * @throws {NotFoundError} If production batch not found
+ */
+async function generateOrGetQRCode (productionId) {
+  try {
+    logger.production.info('Generando o obteniendo código QR para el lote', { productionId })
+
+    // Verify if batch exists
+    const batchExists = await pool.query({
+      text: 'SELECT unique_code FROM production_batch WHERE production_id = $1',
+      values: [productionId]
+    })
+
+    if (batchExists.rows.length === 0) {
+      logger.production.warn('Lote de producción no encontrado para generación de QR', { productionId })
+      throw new NotFoundError('Production batch not found')
+    }
+
+    // Verify if QR exists
+    const existingQRQuery = await pool.query({
+      text: 'SELECT * FROM qr_lote WHERE production_id = $1',
+      values: [productionId]
+    })
+
+    if (existingQRQuery.rows.length > 0 && existingQRQuery.rows[0].qr_code) {
+      logger.production.info('Código QR existente obtenido', { productionId })
+      return existingQRQuery.rows[0]
+    }
+
+    // If not, generate new QR
+    logger.production.info('Código QR no encontrado, generando uno nuevo', { productionId })
+    const newQR = await updateBatchQRCode(productionId)
+    logger.production.info('Código QR generado exitosamente', { productionId })
+    return newQR
+  } catch (error) {
+    logger.production.error('Error generando o obteniendo código QR para el lote', {
+      productionId,
+      error: error.message
+    })
+    throw error
+  }
+}
+
 export const productionBatch = {
   createProductionBatch,
   validateCropByUserId,
@@ -789,5 +846,6 @@ export const productionBatch = {
   getAvaliableActivitiesForBatch,
   getBatchActivities,
   getBatchInfo,
-  getTraceabilityByUniqueCode
+  getTraceabilityByUniqueCode,
+  generateOrGetQRCode
 }

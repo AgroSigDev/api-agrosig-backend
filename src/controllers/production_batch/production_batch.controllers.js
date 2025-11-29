@@ -167,6 +167,27 @@ async function getTraceabilityByCode (uniqueCode) {
   }
 }
 
+async function getQRCode (userId, productionId) {
+  try {
+    logger.production.info('Controlador - Obteniendo código QR para el lote', { userId, productionId })
+    const batch = await productionBatch.getProductionBatchByIdAndUserId(productionId, userId)
+    if (!batch) {
+      logger.production.warn('Controlador - Lote de producción no encontrado al obtener código QR', { userId, productionId })
+      throw new NotFoundError('Lote de producción no encontrado')
+    }
+    const data = await productionBatch.generateOrGetQRCode(productionId)
+    logger.production.info('Controlador - QR code obtenido/generado exitosamente', { userId, productionId })
+    return data
+  } catch (error) {
+    logger.production.error('Controlador - Error obteniendo código QR para el lote', {
+      userId,
+      productionId,
+      error: error.message
+    })
+    throw error
+  }
+}
+
 export {
   createProductionBatch,
   getProductionBatches,
@@ -175,5 +196,6 @@ export {
   getAvaliableActivities,
   getBatchActivities,
   generateQRCode,
-  getTraceabilityByCode
+  getTraceabilityByCode,
+  getQRCode
 }

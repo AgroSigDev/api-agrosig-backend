@@ -1,5 +1,5 @@
 import express from 'express'
-import { createProductionBatch, getProductionBatches, getProductionDetail, associateActivities, getAvaliableActivities, getBatchActivities, generateQRCode, getTraceabilityByCode } from '../../controllers/index.js'
+import { createProductionBatch, getProductionBatches, getProductionDetail, associateActivities, getAvaliableActivities, getBatchActivities, generateQRCode, getTraceabilityByCode, getQRCode } from '../../controllers/index.js'
 import { autenticate } from '../../middlewares/index.js'
 import { logger } from '../../utils/logger.utils.js'
 
@@ -336,6 +336,45 @@ router.post('/generate-qr/:productionId', autenticate, async (request, response,
   } catch (error) {
     const responseTime = Date.now() - startTime
     logger.api.error('Error en endpoint de generación de código QR para lote', {
+      userId: request.user?.user_id,
+      productionId: request.params?.productionId,
+      responseTime: `${responseTime}ms`,
+      error: error.message
+    })
+    next(error)
+  }
+})
+
+router.get('/get-qr/:productionId', autenticate, async (request, response, next) => {
+  const startTime = Date.now()
+
+  try {
+    const userId = request.user.user_id
+    const productionId = request.params.productionId
+
+    logger.api.info('Solicitud de QR code', {
+      userId,
+      productionId,
+      ip: request.ip,
+      userAgent: request.get('User-Agent')
+    })
+
+    const result = await getQRCode(userId, productionId)
+    const responseTime = Date.now() - startTime
+
+    logger.api.info('QR code entregado exitosamente', {
+      userId,
+      productionId,
+      responseTime: `${responseTime}ms`
+    })
+
+    response.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    logger.api.error('Error en endpoint de obtención de QR code', {
       userId: request.user?.user_id,
       productionId: request.params?.productionId,
       responseTime: `${responseTime}ms`,
