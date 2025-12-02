@@ -38,8 +38,8 @@ app.use(cors({
     'http://192.168.34.103:4000',
     'http://localhost',
     'http://10.0.2.2:4000',
-    'https://api-agrosig-backend.onrender.com',
-    'https://soluciones-agrotech.vercel.app'
+    'https://soluciones-agrotech.vercel.app/',
+    'https://api-agrosig-backend.onrender.com'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,

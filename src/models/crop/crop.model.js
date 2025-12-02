@@ -371,31 +371,66 @@ async function getCropByIdAndUserId (cropId, userId) {
  * @async
  * @function getDefaultPlotByUserId
  * @param {number|string} userId - The ID of the user whose default plot is to be retrieved.
- * @returns {Promise<Object|null>} The first active plot object for the user, or null if none found.
+ * @returns {Promise<Object|null>} The first active plot object for the user, or nulacl if none found.
  * @throws {Error} If there is an error during database query execution.
  */
 
 async function getDefaultPlotByUserId (userId) {
   try {
-    logger.crops.info('Obteniendo parcela por defecto por ID de usuario', { userId })
+    logger.crops.info('=== getDefaultPlotByUserId INICIANDO ===', {
+      userId,
+      userIdType: typeof userId
+    })
 
     const query = {
-      text: 'SELECT plot_id FROM plots WHERE user_id = $1 AND is_active = true ORDER BY plot_id LIMIT 1',
+      text: 'SELECT plot_id, user_id, is_active FROM plots WHERE user_id = $1 AND is_active = true ORDER BY plot_id LIMIT 1',
       values: [userId]
     }
+
+    logger.crops.info('Ejecutando consulta SQL:', {
+      sql: query.text,
+      params: query.values
+    })
+
     const result = await pool.query(query)
 
+    logger.crops.info('Resultado de la consulta:', {
+      rows: result.rows,
+      rowCount: result.rowCount,
+      found: !!result.rows[0]
+    })
+
     if (result.rows[0]) {
-      logger.crops.info('Parcela por defecto encontrada', { userId, plotId: result.rows[0].plot_id })
+      logger.crops.info('Parcela por defecto encontrada', {
+        userId,
+        plotId: result.rows[0].plot_id,
+        plotData: result.rows[0]
+      })
     } else {
-      logger.crops.warn('No se encontró parcela por defecto para el usuario', { userId })
+      logger.crops.warn('=== NO SE ENCONTRÓ PARCELA ACTIVA ===', {
+        userId,
+        queryExecuted: query.text,
+        parameters: query.values
+      })
+
+      // Consulta adicional para ver qué hay realmente en la base de datos
+      const debugQuery = {
+        text: 'SELECT plot_id, user_id, is_active, plot_name FROM plots WHERE user_id = $1',
+        values: [userId]
+      }
+      const debugResult = await pool.query(debugQuery)
+      logger.crops.warn('Resultado de consulta de depuración:', {
+        allPlotsForUser: debugResult.rows,
+        count: debugResult.rowCount
+      })
     }
 
     return result.rows[0]
   } catch (error) {
-    logger.crops.error('Error obteniendo parcela por defecto', {
+    logger.crops.error('Error crítico en getDefaultPlotByUserId', {
       userId,
-      error: error.message
+      error: error.message,
+      stack: error.stack
     })
     throw error
   }
