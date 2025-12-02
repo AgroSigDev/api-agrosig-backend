@@ -366,7 +366,7 @@ router.patch('/password/me', autenticate, authorize(['admin', 'user']), async (r
     response.status(200).json({
       success: true,
       data: {
-        message: 'Password updated successfully',
+        message: 'Contraseña actualizada exitosamente',
         user: result
       }
     })

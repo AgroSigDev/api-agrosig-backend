@@ -63,7 +63,7 @@ async function getCropByUserId (userId, cropId) {
       logger.crops.info('Controlador - Cultivo obtenido exitosamente', { userId, cropId })
     } else {
       logger.crops.warn('Controlador - Cultivo no encontrado', { userId, cropId })
-      throw new NotFoundError('Crop not found')
+      throw new NotFoundError('Cultivo no encontrado')
     }
     return crop
   } catch (error) {

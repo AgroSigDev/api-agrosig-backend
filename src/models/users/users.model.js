@@ -122,7 +122,7 @@ async function updateUserById (userId, userData) {
     const existingUser = await getUserById(userId)
     if (!existingUser) {
       logger.users.warn('Usuario no encontrado para actualización', { userId })
-      throw new NotFoundError('User not found')
+      throw new NotFoundError('Usuario no encontrado')
     }
 
     const query = {
@@ -146,7 +146,7 @@ async function updateUserById (userId, userData) {
     if (error instanceof ValidationError || error instanceof NotFoundError) {
       throw error
     }
-    throw new InternalServerError('Error updating user by ID', { original: error.message })
+    throw new InternalServerError('Error actualizando usuario por ID', { original: error.message })
   }
 }
 
@@ -177,24 +177,24 @@ async function updateUserPassword (userId, oldPassword, newPassword, repeatedPas
     const existingUser = await getUserById(userId)
     if (!existingUser) {
       logger.users.warn('Usuario no encontrado para actualizar contraseña', { userId })
-      throw new NotFoundError('User not found')
+      throw new NotFoundError('Usuario no encontrado')
     }
 
     const isOldPasswordValid = await comparePasswords(oldPassword, existingUser.password)
     if (!isOldPasswordValid) {
       logger.users.warn('Contraseña actual incorrecta', { userId })
-      throw new ConflictError('The current password is incorrect')
+      throw new ConflictError('La contraseña actual es incorrecta')
     }
 
     const isSamePassword = await comparePasswords(newPassword, existingUser.password)
     if (isSamePassword) {
       logger.users.warn('Nueva contraseña igual a la actual', { userId })
-      throw new ConflictError('The new password cannot be the same as the current password')
+      throw new ConflictError('La nueva contraseña no puede ser igual a la contraseña actual')
     }
 
     if (newPassword !== repeatedPassword) {
       logger.users.warn('Las contraseñas nuevas no coinciden', { userId })
-      throw new ConflictError('The new password do not match')
+      throw new ConflictError('Las nuevas contraseñas no coinciden')
     }
 
     await vaidateStringLength(newPassword)
@@ -219,7 +219,7 @@ async function updateUserPassword (userId, oldPassword, newPassword, repeatedPas
     if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
       throw error
     }
-    throw new InternalServerError('Error updating user password', { original: error.message })
+    throw new InternalServerError('Error al actualizar la contraseña del usuario', { original: error.message })
   }
 }
 
@@ -244,7 +244,7 @@ async function updateImageUserById (userId, newImagePath) {
     const existingUser = await getUserById(userId)
     if (!existingUser) {
       logger.users.warn('Usuario no encontrado para actualizar imagen', { userId })
-      throw new NotFoundError('User not found')
+      throw new NotFoundError('Usuario no encontrado')
     }
 
     const query = {
@@ -273,7 +273,7 @@ async function updateImageUserById (userId, newImagePath) {
       throw error
     }
 
-    throw new InternalServerError('Error updating image', { original: error.message })
+    throw new InternalServerError('Error al actualizar la imagen de perfil', { original: error.message })
   }
 }
 
@@ -337,7 +337,7 @@ async function updateStatus (userId, isActive) {
     const existingUser = await getUserById(userId)
     if (!existingUser) {
       logger.users.warn('Usuario no encontrado para actualizar estado', { userId })
-      throw new NotFoundError('User not found')
+      throw new NotFoundError('Usuario no encontrado')
     }
 
     const query = {
@@ -360,7 +360,7 @@ async function updateStatus (userId, isActive) {
     })
 
     if (error instanceof NotFoundError) throw error
-    throw new InternalServerError('Error updating status', { original: error.message })
+    throw new InternalServerError('Error actualizando estado', { original: error.message })
   }
 }
 
@@ -381,7 +381,7 @@ async function deleteUserById (userId) {
     const existingUser = await getUserById(userId)
     if (!existingUser) {
       logger.users.warn('Usuario no encontrado para eliminar', { userId })
-      throw new NotFoundError('User not found')
+      throw new NotFoundError('Usuario no encontrado')
     }
 
     const query = {
@@ -398,7 +398,7 @@ async function deleteUserById (userId) {
     })
 
     if (error instanceof NotFoundError) throw error
-    throw new InternalServerError('Error deleting by user', { original: error.message })
+    throw new InternalServerError('Error eliminando usuario', { original: error.message })
   }
 }
 

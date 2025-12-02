@@ -37,7 +37,7 @@ async function getPlotByUserId (userId, plotId) {
       logger.plots.info('Controlador - Parcela obtenida exitosamente', { userId, plotId })
     } else {
       logger.plots.warn('Controlador - Parcela no encontrada', { userId, plotId })
-      throw new NotFoundError('Plot not found')
+      throw new NotFoundError('Parcela no encontrada')
     }
     return data
   } catch (error) {

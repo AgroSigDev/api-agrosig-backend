@@ -25,7 +25,7 @@ async function validFieldsRegisterCrop (crop) {
       camposRecibidos: Object.keys(crop),
       camposFaltantes: ['crop_type', 'crop_variety', 'planting_date', 'harvest_date'].filter(field => !crop[field])
     })
-    throw new ValidationError('There are missing fields to submit in the application')
+    throw new ValidationError('Faltan campos por enviar en la solicitud')
   }
   logger.validation.info('Validación de campos de registro de cultivo exitosa', { crop_type: crop.crop_type })
 }

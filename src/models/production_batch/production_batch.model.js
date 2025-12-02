@@ -33,7 +33,7 @@ async function createProductionBatch (userId, cropId, batchData) {
 
     if (!crop) {
       logger.production.warn('Cultivo no pertenece al usuario', { userId, cropId })
-      throw new NotFoundError('Crop does not belong to user')
+      throw new NotFoundError('Cultivo no encontrado o no pertenece al usuario')
     }
 
     // Generate unique code and QR URL
@@ -91,7 +91,7 @@ async function createProductionBatch (userId, cropId, batchData) {
     if (error instanceof ValidationError || error instanceof NotFoundError) {
       throw error
     }
-    throw new InternalServerError('Error creating production batch', { original: error.message })
+    throw new InternalServerError('Error al crear el lote de producción', { original: error.message })
   }
 }
 
@@ -342,7 +342,7 @@ async function associateActivitiesToBatch (userId, productionId, activityIds) {
     if (error instanceof ValidationError || error instanceof NotFoundError) {
       throw error
     }
-    throw new InternalServerError('Error associating activities to batch', { original: error.message })
+    throw new InternalServerError('Error al asociar actividades al lote', { original: error.message })
   } finally {
     client.release()
   }

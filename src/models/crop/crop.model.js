@@ -38,7 +38,7 @@ async function createCrop (userId, plotId, crop) {
       const defaultPlot = await getDefaultPlotByUserId(userId)
       if (!defaultPlot) {
         logger.crops.warn('El usuario no tiene una parcela activa', { userId })
-        throw new NotFoundError('The user does not have an active plot')
+        throw new NotFoundError('El usuario no tiene una parcela activa')
       }
       plotId = defaultPlot.plot_id
     } else {
@@ -46,7 +46,7 @@ async function createCrop (userId, plotId, crop) {
       const existingPlot = await validateUserPlot(userId, plotId)
       if (!existingPlot) {
         logger.crops.warn('La parcela no pertenece al usuario o no está activa', { userId, plotId })
-        throw new ConflictError('The plot does not belong to the user or is not active')
+        throw new ConflictError('La parcela no pertenece al usuario o no está activa')
       }
     }
 
@@ -84,7 +84,7 @@ async function createCrop (userId, plotId, crop) {
     if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
       throw error
     }
-    throw new InternalServerError('Error creating crop', { original: error.message })
+    throw new InternalServerError('Error creando cultivo', { original: error.message })
   }
 }
 
@@ -119,7 +119,7 @@ async function updateCropByUserId (userId, cropId, cropData) {
     const existingCrop = await getCropByIdAndUserId(cropId, userId)
     if (!existingCrop) {
       logger.crops.warn('Cultivo no encontrado o no pertenece al usuario', { userId, cropId })
-      throw new NotFoundError('Crop not found or does not belong to the user')
+      throw new NotFoundError('Cultivo no encontrado o no pertenece al usuario')
     }
 
     // Validate it belongs to the user
@@ -127,7 +127,7 @@ async function updateCropByUserId (userId, cropId, cropData) {
       const validPlot = await validateUserPlot(userId, cropData.plot_id)
       if (!validPlot) {
         logger.crops.warn('La parcela no pertenece al usuario', { userId, plotId: cropData.plot_id })
-        throw new ConflictError('The plot does not belong to the user')
+        throw new ConflictError('La parcela no pertenece al usuario')
       }
     }
 
@@ -158,7 +158,7 @@ async function updateCropByUserId (userId, cropId, cropData) {
     if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
       throw error
     }
-    throw new InternalServerError('Error updating crop', { original: error.message })
+    throw new InternalServerError('Error actualizando cultivo', { original: error.message })
   }
 }
 
@@ -294,14 +294,14 @@ async function deleteCropByUserId (userId, cropId) {
     const existingCrop = await getCropByIdAndUserId(cropId, userId)
     if (!existingCrop) {
       logger.crops.warn('Cultivo no encontrado o no pertenece al usuario', { userId, cropId })
-      throw new NotFoundError('Crop not found or does not belong to the user')
+      throw new NotFoundError('Cultivo no encontrado o no pertenece al usuario')
     }
 
     // Validar que el cultivo este activo
     const isActive = existingCrop.is_active
     if (!isActive) {
       logger.crops.warn('Cultivo no está activo', { userId, cropId })
-      throw new ConflictError('Crop is not active')
+      throw new ConflictError('El cultivo no está activo')
     }
 
     // Eliminar el cultivo
@@ -322,7 +322,7 @@ async function deleteCropByUserId (userId, cropId) {
     if (error instanceof NotFoundError || error instanceof ConflictError) {
       throw error
     }
-    throw new InternalServerError('Error deleting crop', { original: error.message })
+    throw new InternalServerError('Error eliminando cultivo', { original: error.message })
   }
 }
 

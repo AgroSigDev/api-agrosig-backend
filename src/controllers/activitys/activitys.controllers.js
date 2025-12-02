@@ -28,7 +28,7 @@ async function getActivities (userId, cropId) {
         userId,
         cropId
       })
-      throw new NotFoundError('Crop not found or does not belong to user', {
+      throw new NotFoundError('Cultivo no encontrado o no pertenece al usuario', {
         cropId,
         userId
       })

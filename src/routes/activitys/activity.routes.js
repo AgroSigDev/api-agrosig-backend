@@ -42,7 +42,7 @@ router.get('/all', autenticate, async (request, response) => {
 
     response.status(500).json({
       success: false,
-      message: 'Error retrieving all activities',
+      message: 'Error al obtener todas las actividades',
       error: 'INTERNAL_SERVER_ERROR'
     })
   }
@@ -60,7 +60,7 @@ router.get('/crop/:cropId', autenticate, async (request, response) => {
 
     response.status(200).json({
       success: true,
-      message: 'Activities retrieved successfully',
+      message: 'Actividades recuperadas exitosamente',
       data: activities
     })
 
@@ -87,7 +87,7 @@ router.get('/crop/:cropId', autenticate, async (request, response) => {
 
     response.status(500).json({
       success: false,
-      message: 'Error retrieving activities',
+      message: 'Error al obtener las actividades',
       error: 'INTERNAL_SERVER_ERROR'
     })
   }
@@ -105,7 +105,7 @@ router.get('/:activityId', autenticate, async (request, response) => {
 
     response.status(200).json({
       success: true,
-      message: 'Activity retrieved successfully',
+      message: 'Actividad recuperada exitosamente',
       data: activity
     })
 
@@ -128,7 +128,7 @@ router.get('/:activityId', autenticate, async (request, response) => {
 
     response.status(500).json({
       success: false,
-      message: 'Error retrieving activity',
+      message: 'Error al obtener la actividad',
       error: 'INTERNAL_SERVER_ERROR'
     })
   }
@@ -168,7 +168,7 @@ router.post('/register/:cropId', autenticate, async (request, response) => {
         // Validación básica del mapeo
         if (!mappedInput.input_name) {
           logger.warn('Input sin nombre en el mapeo', { input })
-          throw new ValidationError('Input name is required for all inputs')
+          throw new ValidationError('El nombre del insumo es obligatorio para todos los insumos')
         }
 
         return mappedInput
@@ -179,7 +179,7 @@ router.post('/register/:cropId', autenticate, async (request, response) => {
 
     response.status(201).json({
       success: true,
-      message: 'Activity created successfully',
+      message: 'Actividad creada exitosamente',
       data: result
     })
 
@@ -208,7 +208,7 @@ router.post('/register/:cropId', autenticate, async (request, response) => {
 
     response.status(500).json({
       success: false,
-      message: 'Error creating activity',
+      message: 'Error al crear la actividad',
       error: 'INTERNAL_SERVER_ERROR'
     })
   }

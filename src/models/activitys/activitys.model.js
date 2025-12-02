@@ -56,7 +56,7 @@ async function createActivityWithInputs (userId, cropId, activityData, inputs) {
         userId,
         cropId
       })
-      throw new NotFoundError('The crop does not belong to the user or is not active', { cropId })
+      throw new NotFoundError('El cultivo no pertenece al usuario o no está activo', { cropId })
     }
 
     // Validación de duplicados
@@ -67,7 +67,7 @@ async function createActivityWithInputs (userId, cropId, activityData, inputs) {
         cropId,
         activityType: activityData.activity_type
       })
-      throw new ConflictError('Duplicate activity detected. Please wait before creating another identical activity.', {
+      throw new ConflictError('Actividad duplicada detectada. Por favor espere antes de crear otra actividad idéntica.', {
         existingActivityId: duplicate.activity_id,
         timeWindow: '10 minutes'
       })
@@ -186,7 +186,7 @@ async function createActivityWithInputs (userId, cropId, activityData, inputs) {
       })
     }
 
-    throw new InternalServerError('Error creating activity', {
+    throw new InternalServerError('Error creando actividad', {
       originalError: error.message
     })
   } finally {
@@ -384,7 +384,7 @@ async function getActivitiesByCrop (userId, cropId) {
       throw error
     }
 
-    throw new InternalServerError('Error getting activities', {
+    throw new InternalServerError('Error obteniendo actividades', {
       originalError: error.message
     })
   }
@@ -534,7 +534,7 @@ async function getAllActivitiesByUser (userId) {
       throw error
     }
 
-    throw new InternalServerError('Error getting all user activities', {
+    throw new InternalServerError('Error obteniendo todas las actividades del usuario', {
       originalError: error.message
     })
   }

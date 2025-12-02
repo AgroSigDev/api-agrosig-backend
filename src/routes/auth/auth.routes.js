@@ -37,7 +37,7 @@ router.post('/register', uploadProfile, async (request, response, next) => {
 
     response.status(201).json({
       success: true,
-      message: 'User created successfully',
+      message: 'Usuario creado exitosamente',
       data: result.result,
       token: result.token
     })
@@ -75,7 +75,7 @@ router.post('/login', async (request, response, next) => {
 
     response.status(200).json({
       success: true,
-      message: 'User logged in successfully',
+      message: 'Usuario inició sesión exitosamente',
       data: {
         user: result.user,
         token: result.token,
@@ -102,7 +102,7 @@ router.post('/logout', async (request, response, next) => {
 
     if (!refreshToken) {
       logger.api.warn('Intento de logout sin refresh token')
-      throw new BadRequestError('Missing refresh token in headers')
+      throw new BadRequestError('Falta el token de actualización en los encabezados')
     }
 
     await logoutUser(refreshToken)
@@ -114,7 +114,7 @@ router.post('/logout', async (request, response, next) => {
 
     response.status(200).json({
       success: true,
-      message: 'Logout successful. Session terminated.'
+      message: 'Cierre de sesión exitoso. Sesión terminada.'
     })
   } catch (error) {
     const responseTime = Date.now() - startTime

@@ -127,17 +127,17 @@ function extractAndValidateCoordinates (plotData) {
   } if (lat === undefined || long === undefined || isNaN(lat) || isNaN(long)) {
     // Validar que se obtuvieron coordenadas válidas
     logger.plots.warn('Coordenadas inválidas o faltantes', { plotData, avaliableFields: Object.keys(plotData) })
-    throw new ValidationError('Valid coordinates are required. Provide either: "lat" and "long", "latitude" and "longitude", or coordinates in "location" field')
+    throw new ValidationError('Se requieren coordenadas válidas. Proporcione "lat" y "long", "latitude" y "longitude", o coordenadas en el campo "location"')
   }
 
   // Validar rangos de tolerancia
   if (lat < -90 || lat > 90) {
     logger.plots.warn('Latitud fuera de rango', { lat })
-    throw new ValidationError(`Invalid latitude: ${lat}. Must be between -90 and 90.`)
+    throw new ValidationError(`Latitud inválida: ${lat}. Debe estar entre -90 y 90.`)
   }
   if (long < -180 || long > 180) {
     logger.plots.warn('Longitud fuera de rango', { long })
-    throw new ValidationError(`Invalid longitude: ${long}. Must be between -180 and 180.`)
+    throw new ValidationError(`Longitud inválida: ${long}. Debe estar entre -180 y 180.`)
   }
 
   logger.plots.info('Coordenadas validadas exitosamente', { lat, long })
@@ -169,7 +169,7 @@ async function createPlot (userId, plot) {
     const existingUserPlot = await getPlotByUserId(userId)
     if (existingUserPlot) {
       logger.plots.warn('El usuario ya tiene una parcela registrada', { userId })
-      throw new ConflictError('User already has a plot')
+      throw new ConflictError('El usuario ya tiene una parcela registrada')
     }
 
     await validateLocationPlot(plot.location)
@@ -177,7 +177,7 @@ async function createPlot (userId, plot) {
 
     if (!plot.lat || !plot.long) {
       logger.plots.warn('Faltan coordenadas en la parcela', { userId })
-      throw new ValidationError('Latitude and Longitude are required')
+      throw new ValidationError('Se requieren Latitud y Longitud')
     }
 
     const { lat, long } = extractAndValidateCoordinates(plot)
@@ -212,7 +212,7 @@ async function createPlot (userId, plot) {
     if (error instanceof ValidationError || error instanceof ConflictError) {
       throw error
     }
-    throw new InternalServerError('Error creating plot', { original: error.message })
+    throw new InternalServerError('Error creando parcela', { original: error.message })
   }
 }
 
@@ -446,12 +446,12 @@ async function updatePlotById (userId, plotId, plotData) {
     const existingPlot = await getPlotbyId(plotId)
     if (!existingPlot) {
       logger.plots.warn('Parcela no encontrada para actualizar', { plotId })
-      throw new NotFoundError('Plot not found')
+      throw new NotFoundError('Parcela no encontrada')
     }
 
     if (existingPlot.user_id !== userId) {
       logger.plots.warn('El usuario no es propietario de la parcela', { userId, plotId })
-      throw new ConflictError('User does not own this plot')
+      throw new ConflictError('El usuario no es propietario de esta parcela')
     }
 
     const { lat, long } = extractAndValidateCoordinates(plotData)
@@ -492,7 +492,7 @@ async function updatePlotById (userId, plotId, plotData) {
     if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof ConflictError) {
       throw error
     }
-    throw new InternalServerError('Error updating plot by ID', { original: error.message })
+    throw new InternalServerError('Error actualizando parcela por ID', { original: error.message })
   }
 }
 
@@ -518,12 +518,12 @@ async function deletePlotById (userId, plotId) {
     const existingPlot = await getPlotbyId(plotId)
     if (!existingPlot) {
       logger.plots.warn('Parcela no encontrada para eliminar', { plotId })
-      throw new NotFoundError('Plot not found')
+      throw new NotFoundError('Parcela no encontrada')
     }
 
     if (existingPlot.user_id !== userId) {
       logger.plots.warn('El usuario no es propietario de la parcela para eliminar', { userId, plotId })
-      throw new ConflictError('User does not own this plot')
+      throw new ConflictError('El usuario no es propietario de esta parcela')
     }
 
     const query = {
@@ -543,7 +543,7 @@ async function deletePlotById (userId, plotId) {
     if (error instanceof NotFoundError || error instanceof ConflictError) {
       throw error
     }
-    throw new InternalServerError('Error deleting plot by ID', { original: error.message })
+    throw new InternalServerError('Error eliminando parcela por ID', { original: error.message })
   }
 }
 

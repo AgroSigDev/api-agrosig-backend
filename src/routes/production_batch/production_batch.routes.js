@@ -34,7 +34,7 @@ router.post('/register/:cropId', autenticate, async (request, response, next) =>
 
     response.status(201).json({
       success: true,
-      message: 'Production batch created successfully',
+      message: 'Lote de producción creado exitosamente',
       data: result
     })
   } catch (error) {
@@ -211,7 +211,7 @@ router.post('/associate-activities/:productionId', autenticate, async (request, 
 
     response.status(200).json({
       success: true,
-      message: 'Activities associated successfully',
+      message: 'Actividades asociadas exitosamente',
       data: result
     })
   } catch (error) {

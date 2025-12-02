@@ -15,7 +15,7 @@ import { logger } from '../../utils/logger.utils.js'
 async function validateActivity (activity) {
   if (!activity.activity_type || !activity.date || !activity.description) {
     logger.warn('Validación de actividad fallida - campos faltantes', { activity })
-    throw new ValidationError('There are missing fields to submit in the application', {
+    throw new ValidationError('Hay campos faltantes para enviar en la aplicación', {
       missingFields: {
         activity_type: !activity.activity_type,
         date: !activity.date,
@@ -28,7 +28,7 @@ async function validateActivity (activity) {
   // Validación adicional para el tipo de actividad
   if (typeof activity.activity_type !== 'string' || activity.activity_type.trim().length === 0) {
     logger.warn('Validación de actividad fallida - tipo de actividad inválido', { activity })
-    throw new ValidationError('Activity type must be a non-empty string', {
+    throw new ValidationError('El tipo de actividad debe ser una cadena no vacía', {
       field: 'activity_type',
       value: activity.activity_type
     })
@@ -37,7 +37,7 @@ async function validateActivity (activity) {
   // Validación adicional para la descripción
   if (typeof activity.description !== 'string' || activity.description.trim().length === 0) {
     logger.warn('Validación de actividad fallida - descripción inválida', { activity })
-    throw new ValidationError('Description must be a non-empty string', {
+    throw new ValidationError('La descripción debe ser una cadena no vacía', {
       field: 'description',
       value: activity.description
     })
@@ -68,7 +68,7 @@ async function validateInputUsed (inputUsed) {
     inputUsed.unit_cost === null
   ) {
     logger.warn('Validación de insumo fallida - campos faltantes', { inputUsed })
-    throw new ValidationError('There are missing fields to submit in the application', {
+    throw new ValidationError('Hay campos faltantes para enviar en la aplicación', {
       missingFields: {
         input_name: !inputUsed.input_name,
         unit: !inputUsed.unit,
@@ -87,7 +87,7 @@ async function validateInputUsed (inputUsed) {
     parseFloat(inputUsed.unit_cost) < 0
   ) {
     logger.warn('Validación de insumo fallida - valores numéricos inválidos', { inputUsed })
-    throw new ValidationError('Quantity and unit cost must be valid non-negative numbers', {
+    throw new ValidationError('La cantidad y el costo unitario deben ser números válidos y no negativos', {
       quantity: inputUsed.quantity,
       unit_cost: inputUsed.unit_cost
     })
@@ -96,7 +96,7 @@ async function validateInputUsed (inputUsed) {
   // Validar que input_name sea un string no vacío
   if (typeof inputUsed.input_name !== 'string' || inputUsed.input_name.trim().length === 0) {
     logger.warn('Validación de insumo fallida - nombre de insumo inválido', { inputUsed })
-    throw new ValidationError('Input name must be a non-empty string', {
+    throw new ValidationError('El nombre del insumo debe ser una cadena no vacía', {
       field: 'input_name',
       value: inputUsed.input_name
     })
@@ -116,7 +116,7 @@ async function validateInputUsed (inputUsed) {
 async function validateInputsArray (inputs) {
   if (!Array.isArray(inputs)) {
     logger.warn('Validación de array de insumos fallida - no es un array')
-    throw new ValidationError('Inputs must be an array', {
+    throw new ValidationError('Los insumos deben ser un array', {
       received: typeof inputs
     })
   }

@@ -9,7 +9,7 @@ import { ValidationError } from '../../lib/api.errors.js'
  */
 async function validFieldsRegisterComment (comment) {
   if (!comment.message || comment.message.trim() === '') {
-    throw new ValidationError('Message is required and cannot be empty')
+    throw new ValidationError('El campo de mensaje es obligatorio y no puede estar vacío')
   }
 }
 

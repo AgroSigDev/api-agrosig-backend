@@ -90,7 +90,7 @@ async function updateComment (userId, commentId, commentData) {
         userId,
         commentId
       })
-      throw new NotFoundError('Comment not found or user not authorized')
+      throw new NotFoundError('Comentario no encontrado o usuario no autorizado')
     }
 
     const updatedComment = result.rows[0]
@@ -112,7 +112,7 @@ async function updateComment (userId, commentId, commentData) {
     if (error instanceof ValidationError || error instanceof NotFoundError) {
       throw error
     }
-    throw new InternalServerError('Error updating comment', { original: error.message })
+    throw new InternalServerError('Error actualizando comentario', { original: error.message })
   }
 }
 
@@ -146,7 +146,7 @@ async function getAllComments () {
     logger.comments.error('Error obteniendo comentarios', {
       error: error.message
     })
-    throw new InternalServerError('Error getting comments', { original: error.message })
+    throw new InternalServerError('Error obteniendo comentarios', { original: error.message })
   }
 }
 
@@ -181,7 +181,7 @@ async function deleteComment (userId, commentId) {
         userId,
         commentId
       })
-      throw new NotFoundError('Comment not found or user not authorized')
+      throw new NotFoundError('Comentario no encontrado o usuario no autorizado')
     }
 
     const deletedComment = result.rows[0]
@@ -202,7 +202,7 @@ async function deleteComment (userId, commentId) {
     if (error instanceof NotFoundError) {
       throw error
     }
-    throw new InternalServerError('Error deleting comment', { original: error.message })
+    throw new InternalServerError('Error eliminando comentario', { original: error.message })
   }
 }
 

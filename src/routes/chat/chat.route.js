@@ -30,7 +30,7 @@ router.post('/register', autenticate, async (request, response, next) => {
 
     response.status(201).json({
       success: true,
-      message: 'Comment created successfully',
+      message: 'Comentario creado exitosamente',
       data: result
     })
   } catch (error) {
@@ -103,7 +103,7 @@ router.patch('/update/:commentId', autenticate, async (request, response, next) 
 
     response.status(200).json({
       success: true,
-      message: 'Comment updated successfully',
+      message: 'Comentario actualizado exitosamente',
       data: result
     })
   } catch (error) {
@@ -144,7 +144,7 @@ router.delete('/delete/:commentId', autenticate, async (request, response, next)
 
     response.status(200).json({
       success: true,
-      message: 'Comment deleted successfully'
+      message: 'Comentario eliminado exitosamente'
     })
   } catch (error) {
     const responseTime = Date.now() - startTime

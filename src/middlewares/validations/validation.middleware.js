@@ -21,7 +21,7 @@ async function validFieldsRegister (user) {
       camposRecibidos: Object.keys(user),
       camposFaltantes: ['first_name', 'paternal_surname', 'maternal_surname', 'email', 'password'].filter(field => !user[field])
     })
-    throw new ValidationError('There are missing fields to submit in the application')
+    throw new ValidationError('Faltan campos por enviar en la solicitud')
   }
   logger.validation.info('Validación de campos de registro exitosa', { email: user.email })
 }
@@ -44,7 +44,7 @@ async function validFieldsUpdateProfile (user) {
       camposRecibidos: Object.keys(user),
       camposFaltantes: ['first_name', 'paternal_surname', 'maternal_surname', 'email'].filter(field => !user[field])
     })
-    throw new ValidationError('There are missing fields to submit in the application')
+    throw new ValidationError('Faltan campos por enviar en la solicitud')
   }
 
   // Validar formato de email
@@ -67,7 +67,7 @@ async function validateFieldsLogin (user) {
     logger.validation.warn('Campos faltantes en login', {
       camposRecibidos: Object.keys(user)
     })
-    throw new ValidationError('There are missing fields to submit in the application')
+    throw new ValidationError('Faltan campos por enviar en la solicitud')
   }
   logger.validation.info('Validación de campos de login exitosa', { email: user.email })
 }
@@ -86,7 +86,7 @@ async function vaidateStringLength (password) {
     logger.validation.warn('Contraseña demasiado corta', {
       longitud: password.length
     })
-    throw new ValidationError('Password must be at least 8 characters long')
+    throw new ValidationError('La contraseña debe tener al menos 8 caracteres')
   }
   logger.validation.info('Validación de longitud de contraseña exitosa')
 }
@@ -104,7 +104,7 @@ async function validateEmialFormart (email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
     logger.validation.warn('Formato de email inválido', { email })
-    throw new ValidationError('Invalid email format')
+    throw new ValidationError('Formato de email inválido')
   }
   logger.validation.info('Validación de formato de email exitosa', { email })
 }

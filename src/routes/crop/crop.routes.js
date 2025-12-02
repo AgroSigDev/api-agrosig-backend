@@ -31,7 +31,7 @@ router.post('/register', autenticate, async (request, response, next) => {
 
     response.status(201).json({
       success: true,
-      message: 'Crop created successfully',
+      message: 'Cultivo creado exitosamente',
       data: result
     })
   } catch (error) {
@@ -165,7 +165,7 @@ router.patch('/update/:cropId', autenticate, async (request, response, next) => 
 
     response.status(200).json({
       success: true,
-      message: 'Crop updated successfully',
+      message: 'Cultivo actualizado exitosamente',
       data: result
     })
   } catch (error) {
@@ -206,7 +206,7 @@ router.delete('/delete/:cropId', autenticate, async (request, response, next) =>
 
     response.status(204).json({
       success: true,
-      message: 'Crop Delete Succefully'
+      message: 'Cultivo eliminado exitosamente'
     })
   } catch (error) {
     const responseTime = Date.now() - startTime

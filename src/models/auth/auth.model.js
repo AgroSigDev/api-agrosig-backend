@@ -40,7 +40,7 @@ async function registerUser (user) {
 
     if (existingUser) {
       logger.auth.warn('Intento de registro con email existente', { email: user.email })
-      throw new ConflictError('User with this email already exists')
+      throw new ConflictError('Ya existe un usuario con este correo electrónico')
     }
 
     await vaidateStringLength(user.password)
@@ -110,24 +110,24 @@ async function loginUser (user) {
 
     if (!foundUser) {
       logger.auth.warn('Usuario no encontrado en login', { email: user.email })
-      throw new NotFoundError('User not found')
+      throw new NotFoundError('Usuario no encontrado')
     }
 
     if (foundUser.google_id) {
       logger.auth.warn('Intento de login con cuenta de Google', { email: user.email })
-      throw new AuthError('The email is already linked to this Google account')
+      throw new AuthError('El correo electrónico ya está vinculado a una cuenta de Google')
     }
 
     if (!foundUser.is_active) {
       logger.auth.warn('Intento de login con usuario inactivo', { email: user.email })
-      throw new ForbiddenError('User is not active, please request reactivation from an administrator.')
+      throw new ForbiddenError('El usuario no está activo, por favor solicite la reactivación a un administrador.')
     }
 
     const isPasswordValidate = await comparePasswords(user.password, foundUser.password)
 
     if (!isPasswordValidate) {
       logger.auth.warn('Contraseña incorrecta en login', { email: user.email })
-      throw new AuthError('Invalid password')
+      throw new AuthError('Contraseña inválida')
     }
 
     const token = generateAuthToken(foundUser)
@@ -167,7 +167,7 @@ async function loginUser (user) {
       throw error
     }
 
-    throw new InternalServerError('Error logging in user', { original: error.message })
+    throw new InternalServerError('Error al iniciar sesión del usuario', { original: error.message })
   }
 }
 
@@ -278,7 +278,7 @@ async function logoutUser (refreshToken) {
   try {
     await revokeRefreshToken(refreshToken)
     logger.auth.info('Logout exitoso', { refreshToken })
-    return { message: 'Logout successful. Tokens revoked.' }
+    return { message: 'Cierre de sesión exitoso. Tokens revocados.' }
   } catch (error) {
     logger.auth.error('Error en logout', {
       refreshToken,
@@ -296,7 +296,7 @@ async function validateRefreshToken (refreshToken) {
     const revoked = await isRefreshTokenRevoked(refreshToken)
     if (revoked) {
       logger.auth.warn('Refresh token revocado', { refreshToken })
-      throw new Error('Refresh token has been revoked')
+      throw new Error('El token de actualización ha sido revocado')
     }
     logger.auth.info('Refresh token válido', { refreshToken })
   } catch (error) {

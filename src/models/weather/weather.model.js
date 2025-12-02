@@ -112,16 +112,16 @@ async function getWeatherData (latitude, longitude) {
     })
 
     if (error.response?.status === 401) {
-      throw new BadRequestError('Invalid API key for weather service')
+      throw new BadRequestError('Clave de API inválida para el servicio de clima')
     } else if (error.response?.status === 404) {
-      throw new NotFoundError('Weather data not found for the given coordinates')
+      throw new NotFoundError('Datos del clima no encontrados para las coordenadas proporcionadas')
     } else if (error.response?.status >= 500) {
-      throw new ServiceUnavailableError('Weather service is temporarily unavailable')
+      throw new ServiceUnavailableError('El servicio de clima no está disponible temporalmente')
     } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw new ServiceUnavailableError('Cannot connect to weather service')
+      throw new ServiceUnavailableError('No se puede conectar al servicio de clima')
     }
 
-    throw new InternalServerError('Error fetching weather data', { original: error.message })
+    throw new InternalServerError('Error obteniendo datos del clima', { original: error.message })
   }
 }
 
@@ -207,7 +207,7 @@ async function saveOrUpdateWeatherData (userId, plotId, weatherData) {
       plotId,
       error: error.message
     })
-    throw new InternalServerError('Error saving weather data', { original: error.message })
+    throw new InternalServerError('Error guardando datos del clima', { original: error.message })
   }
 }
 
@@ -272,14 +272,14 @@ async function fetchWeeklyWeather (latitude, longitude) {
     if (error.response?.status === 401) {
       throw new BadRequestError('Invalid API key for weather service')
     } else if (error.response?.status === 404) {
-      throw new NotFoundError('Weather forecast not found for the given coordinates')
+      throw new NotFoundError('Pronóstico del clima no encontrado para las coordenadas proporcionadas')
     } else if (error.response?.status >= 500) {
       throw new ServiceUnavailableError('Weather service is temporarily unavailable')
     } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       throw new ServiceUnavailableError('Cannot connect to weather service')
     }
 
-    throw new InternalServerError('Error fetching weekly weather forecast', { original: error.message })
+    throw new InternalServerError('Error obteniendo pronóstico semanal del clima', { original: error.message })
   }
 }
 

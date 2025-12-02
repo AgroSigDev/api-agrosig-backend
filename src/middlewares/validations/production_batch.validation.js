@@ -17,7 +17,7 @@ async function validateProductionBatch (batchData) {
       camposRecibidos: Object.keys(batchData),
       camposFaltantes: ['name'].filter(field => !batchData[field])
     })
-    throw new ValidationError('Name is required')
+    throw new ValidationError('Nombre del lote de producción es obligatorio')
   }
   logger.validation.info('Validación de lote de producción exitosa', { name: batchData.name })
 }

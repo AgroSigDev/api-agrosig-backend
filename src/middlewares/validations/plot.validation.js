@@ -21,7 +21,7 @@ async function validFieldsRegisterPlot (plot) {
       camposRecibidos: Object.keys(plot),
       camposFaltantes: missingFields
     })
-    throw new ValidationError('There are missing fields to submit in the application')
+    throw new ValidationError('Faltan campos obligatorios para enviar en la aplicación')
   }
 
   // Verificar que tengamos al menos una forma de obtener coordenadas
@@ -34,7 +34,7 @@ async function validFieldsRegisterPlot (plot) {
     logger.validation.warn('No se proporcionaron coordenadas', {
       camposDisponibles: Object.keys(plot)
     })
-    throw new ValidationError('Coordinates are required. Provide either "lat/long", "latitude/longitude", or coordinates in "location" field')
+    throw new ValidationError('Se requieren coordenadas. Proporcione "lat/long", "latitude/longitude" o coordenadas en el campo "location"')
   }
 
   logger.validation.info('Validación de campos de registro de parcela exitosa', {
@@ -59,7 +59,7 @@ async function validateLocationPlot (location) {
 
   if (!location || location.trim().length < 3) {
     logger.validation.warn('Ubicación muy corta o vacía', { location })
-    throw new ValidationError('Location must be at least 3 characters long')
+    throw new ValidationError('La ubicación debe tener al menos 3 caracteres')
   }
 
   if (!locationRegex.test(location)) {
@@ -68,7 +68,7 @@ async function validateLocationPlot (location) {
       length: location.length,
       firstChars: location.substring(0, 50)
     })
-    throw new ValidationError('Invalid location format. Please use only letters, numbers, spaces, and common punctuation.')
+    throw new ValidationError('Formato de ubicación inválido. Use solo letras, números, espacios y puntuación común.')
   }
 
   logger.validation.info('Validación de formato de ubicación exitosa', {
@@ -94,12 +94,12 @@ async function validCoordinates (latitude, longitude) {
   const lon = parseFloat(longitude)
   if (lat < -90 || lat > 90) {
     logger.validation.warn('Latitud inválida', { latitude: lat })
-    throw new ValidationError('Invalid latitude')
+    throw new ValidationError('Latitud inválida')
   }
 
   if (lon < -180 || lon > 180) {
     logger.validation.warn('Longitud inválida', { longitude: lon })
-    throw new ValidationError('Invalid longitude')
+    throw new ValidationError('Longitud inválida')
   }
   return !isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
 }
@@ -116,7 +116,7 @@ async function validCoordinates (latitude, longitude) {
 async function validateArea (area) {
   if (isNaN(area) || area <= 0) {
     logger.validation.warn('Área inválida', { area })
-    throw new ValidationError('Area must be a positive number')
+    throw new ValidationError('El área debe ser un número positivo')
   }
   logger.validation.info('Validación de área exitosa', { area })
 }

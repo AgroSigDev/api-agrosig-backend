@@ -11,7 +11,7 @@ async function updateWeatherData (userId, plotId) {
     const location = await Weather.findUbication(userId, plotId)
     if (!location) {
       logger.weather.warn('Controlador - Parcela no encontrada para el usuario', { userId, plotId })
-      throw new NotFoundError('Plot not found for this user')
+      throw new NotFoundError('Parcela no encontrada para este usuario')
     }
 
     // 2. Traer datos del clima desde OpenWeather
@@ -52,7 +52,7 @@ async function fetchWeeklyWeather (userId, plotId) {
     const location = await Weather.findUbication(userId, plotId)
     if (!location) {
       logger.weather.warn('Controlador - Parcela no encontrada para el usuario', { userId, plotId })
-      throw new NotFoundError('Plot not found for this user')
+      throw new NotFoundError('Parcela no encontrada para este usuario')
     }
 
     const weeklyWeather = await Weather.fetchWeeklyWeather(location.latitude, location.longitude)
@@ -74,7 +74,7 @@ async function fetchWeeklyWeather (userId, plotId) {
     if (error instanceof NotFoundError) {
       throw error
     }
-    throw new InternalServerError('Error fetching weekly weather', { original: error.message })
+    throw new InternalServerError('Error obteniendo pronóstico semanal del clima', { original: error.message })
   }
 }
 
